@@ -1,0 +1,158 @@
+<html>
+
+<head>
+	<!-- Moralis SDK code -->
+	<script src="https://cdn.jsdelivr.net/npm/web3@latest/dist/web3.min.js"></script>
+	<script src="https://unpkg.com/moralis/dist/moralis.js"></script>
+	<script src="https://cdn.jsdelivr.net/npm/jquery@3.6.0/dist/jquery.min.js"
+		integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4=" crossorigin="anonymous"></script>
+</head>
+
+<body>
+	<h1>Moralis Gas Stats</h1>
+	<h1 id="address"></h1>
+
+	<button id="btn-login">Moralis Login</button>
+	<button id="btn-logout">Logout</button>
+
+
+	<script>
+		// connect to Moralis server
+		const serverUrl = "https://uhgq3qlkvz2n.usemoralis.com:2053/server";
+		const appId = "jIF4NCl6ZSwSyPmfVbWyzRH9vPR8QqBlUTUG2TZ4";
+		Moralis.start({
+			serverUrl,
+			appId
+		});
+
+		// LOG IN WITH METAMASK
+
+		async function login() {
+			let user = Moralis.User.current();
+			if (!user) {
+				user = await Moralis.authenticate();
+			}
+			alert(`${await user.get('ethAddress')} logined`)
+			console.log("logged in user:", user);
+		}
+
+    function arrTest(){
+      let arr = ["test",1]
+      console.log(arr)
+    }
+
+		// LOG OUT
+		async function logOut() {
+			await Moralis.User.logOut();
+			console.log("logged out");
+		}
+
+		async function addObject() {
+			let obj = Moralis.Object.extend("Object")
+			let newObj = new obj()
+			newObj.set('name', "obj1")
+			newObj.set('number', 1)
+			await newObj.save()
+			alert("obj saved")
+		}
+
+		async function getObject() {
+			let obj = Moralis.Object.extend("Object")
+			let q = new Moralis.Query(obj)
+			q.equalTo("name", "obj2")
+			console.log(q)
+			let result = await q.find()
+			console.log(result)
+		}
+
+		async function editObject() {
+			let obj = Moralis.Object.extend("Object")
+			let q = new Moralis.Query(obj)
+			q.equalTo("name", "obj1")
+			let result = await q.first()
+			result.set("name", "obj2")
+			await result.save()
+			alert("obj editted")
+		}
+
+		async function deleteObject() {
+			let obj = Moralis.Object.extend("Object")
+			let q = new Moralis.Query(obj)
+			q.equalTo("name", "obj2")
+			let result = await q.first()
+			result.destroy()
+			console.log(result)
+			alert("obj deleted")
+		}
+
+		async function test1() {
+			let result = await Moralis.Cloud.run("getData", {
+				address: "0x11Ba960a711e15a7847d309c62782791f295C8E1"
+			})
+			console.log(result)
+			console.log(result.data)
+		}
+
+		let test = async () => {
+			let address = "0x11Ba960a711e15a7847d309c62782791f295C8E1"
+
+			let abi = [{
+				"inputs": [{
+					"internalType": "address",
+					"name": "_userAddress",
+					"type": "address"
+				}],
+				"name": "getUserPublicDetailsByAddress",
+				"outputs": [{
+					"internalType": "uint256",
+					"name": "_id",
+					"type": "uint256"
+				}, {
+					"internalType": "string",
+					"name": "_userName",
+					"type": "string"
+				}],
+				"stateMutability": "view",
+				"type": "function"
+			}]
+
+			
+			let body = {
+				abi: abi,
+				params: {
+					_userAddress: address
+				}
+			}
+
+
+			let URL =
+				'https://deep-index.moralis.io/api/v2/0x48eedeC866fFAeb7FC5E6375FbcFDe2b8FB16308/function?chain=mumbai&function_name=getUserPublicDetailsByAddress'
+
+			let data = await fetch(URL,{
+				url: URL,
+				followRedirect: true,
+				headers: {
+					'accept': "application/json",
+          'X-API-Key': 'Vdp1Tjb3SADQhfVlzd8yF5Ol6NFzLgQ6iKXZcccQ8PpNZqD7pGDBvG3bDvIkHcfO',
+					'Content-type': "application/json"
+				},
+				body: JSON.stringify(body),
+				method: 'POST',
+			})
+
+			console.log(await data.json())
+
+		}
+
+    //'X-API-Key': 'Vdp1Tjb3SADQhfVlzd8yF5Ol6NFzLgQ6iKXZcccQ8PpNZqD7pGDBvG3bDvIkHcfO',
+
+
+
+		// bind button click handlers
+		document.getElementById("btn-login").onclick = login;
+		document.getElementById("btn-logout").onclick = logOut;
+
+	</script>
+</body>
+
+</html>

@@ -1,0 +1,915 @@
+#
+directive @admin on FIELD_DEFINITION
+
+#
+type AliasResponse {
+  #
+  result: ConnectionResult!
+}
+
+#
+type AuthResponse {
+  #
+  result: AuthResponse_Result!
+
+  #
+  authToken: String!
+}
+
+#
+enum AuthResponse_Result {
+  #
+  SUCCESS
+
+  #
+  AUTHENTICATION_FAILED
+}
+
+#
+type BatchConnectResponse {
+  #
+  result: ConnectionResult!
+
+  #
+  alreadyFollowed: [String!]
+
+  #
+  successFollowed: [String!]
+
+  #
+  failToFollow: [String!]
+}
+
+#
+input BatchUpdateConnectionInput {
+  #
+  fromAddr: String!
+
+  #
+  signingInputs: [SigningInput!]!
+
+  #
+  signingKey: String!
+
+  #
+  namespace: String
+
+  #
+  network: Network
+}
+
+#
+type Connect {
+  #
+  address: String!
+
+  #
+  domain: String!
+
+  #
+  ens: String! @deprecated(reason: "`ens` is deprecated. Use `domain` instead.")
+
+  #
+  avatar: String!
+
+  #
+  alias: String!
+
+  #
+  namespace: String!
+
+  #
+  type: ConnectionType!
+
+  #
+  lastModifiedTime: String!
+    @deprecated(reason: "`lastModifiedTime` is deprecated.")
+
+  #
+  verifiable: Boolean!
+}
+
+#
+type ConnectResponse {
+  #
+  result: ConnectionResult!
+}
+
+#
+type Connection {
+  #
+  fromAddr: String!
+
+  #
+  toAddr: String!
+
+  #
+  followStatus: FollowStatus!
+
+  #
+  namespace: String!
+
+  # The alias set by the fromAddr for toAddr
+  alias: String!
+
+  #
+  network: Network!
+
+  # connection type, default is FOLLOW
+  type: ConnectionType!
+
+  #
+  updatedAt: String!
+
+  #
+  createdAt: String!
+
+  #
+  proof: String!
+}
+
+#
+type ConnectionIdentityPage {
+  #
+  pageInfo: PageInfo!
+
+  #
+  list: [Connect!]!
+}
+
+#
+enum ConnectionResult {
+  #
+  SUCCESS
+
+  #
+  FAILED
+
+  #
+  CONNECTED
+
+  #
+  DISCONNECTED
+
+  #
+  INVALID_ADDRESS
+
+  #
+  DUPLICATE_ADDRESS
+
+  #
+  INVALID_SIGNATURE
+
+  #
+  INVALID_OPERATION
+
+  #
+  SIGNING_KEY_EXPIRED
+}
+
+#
+enum ConnectionType {
+  #
+  FOLLOW
+
+  #
+  LIKE
+
+  #
+  REPORT
+
+  #
+  WATCH
+
+  #
+  VOTE
+}
+
+#
+type DisconnectResponse {
+  #
+  result: ConnectionResult!
+}
+
+#
+type FollowResponse {
+  #
+  result: FollowResponse_Result!
+}
+
+#
+enum FollowResponse_Result {
+  #
+  SUCCESS
+
+  #
+  FAILED
+
+  #
+  INVALID_ADDRESS
+
+  #
+  AUTHENTICATION_FAILED
+
+  #
+  EMPTY_NAMESPACE
+
+  #
+  FOLLOWED
+}
+
+#
+type FollowStatus {
+  #
+  isFollowed: Boolean!
+
+  #
+  isFollowing: Boolean!
+}
+
+#
+type HomePage {
+  #
+  userCount: Int!
+
+  #
+  connectionCount: Int!
+
+  #
+  indexedUserCount: Int!
+
+  #
+  indexedConnectionCount: Int!
+}
+
+#
+type MetricsCount {
+  #
+  top10Count: Int!
+
+  #
+  top100Count: Int!
+
+  #
+  top1000Count: Int!
+}
+
+#
+type Mutation {
+  #
+  registerKey(input: RegisterKeyInput!): RegisterKeyResponse!
+
+  #
+  connect(input: UpdateConnectionInput!): ConnectResponse!
+
+  #
+  disconnect(input: UpdateConnectionInput!): DisconnectResponse!
+
+  #
+  alias(input: UpdateConnectionInput!): AliasResponse!
+
+  #
+  batchConnect(input: BatchUpdateConnectionInput!): BatchConnectResponse!
+
+  #
+  setTwitterHandle(
+    address: String!
+    handle: String!
+    network: Network
+  ): SetTwitterHandleResponse!
+
+  #
+  subscribe(input: [SubscribeInput!]!): SubscribeResponse!
+
+  #
+  auth(address: String!, signature: String!, network: Network): AuthResponse!
+    @deprecated(
+      reason: "`auth` for centralized authorization is deprecated. To make data verifiable, use `registerKey` instead."
+    )
+
+  #
+  follow(
+    fromAddr: String!
+    toAddr: String!
+    signature: String!
+    network: Network
+    alias: String
+    namespace: String
+  ): FollowResponse!
+    @deprecated(
+      reason: "`follow` is deprecated. To make data verifiable, use `connect` instead."
+    )
+
+  #
+  unfollow(
+    fromAddr: String!
+    toAddr: String!
+    signature: String!
+    network: Network
+    namespace: String
+  ): UnFollowResponse!
+    @deprecated(
+      reason: "`unfollow` is deprecated. To make data verifiable, use `disconnect` instead."
+    )
+
+  #
+  setAlias(
+    fromAddr: String!
+    toAddr: String!
+    signature: String!
+    alias: String!
+    network: Network
+    namespace: String
+  ): SetAliasResponse!
+    @deprecated(
+      reason: "`setAlias` is deprecated. To make data verifiable, use `alias` instead."
+    )
+
+  #
+  setProfile(
+    address: String!
+    avatar: String
+    domain: String
+    signature: String!
+    network: Network!
+  ): SetProfileResponse!
+}
+
+#
+type NFTOwner {
+  #
+  tokenId: String!
+
+  #
+  owner: String!
+
+  #
+  twitter: Twitter
+}
+
+#
+enum Network {
+  #
+  ETH
+
+  #
+  SOLANA
+}
+
+#
+interface Node {
+  #
+  id: ID!
+}
+
+#
+type PageInfo {
+  #
+  startCursor: String!
+
+  #
+  endCursor: String!
+
+  #
+  hasNextPage: Boolean!
+
+  #
+  hasPreviousPage: Boolean!
+}
+
+#
+scalar Percentage
+
+#
+type Popular {
+  #
+  address: String!
+
+  #
+  domain: String!
+
+  #
+  ens: String! @deprecated(reason: "`ens` is deprecated. Use `domain` instead.")
+
+  #
+  recommendationReason: String!
+
+  #
+  followerCount: Int!
+
+  #
+  isFollowing: Boolean!
+
+  #
+  avatar: String!
+}
+
+#
+type PopularPage {
+  #
+  pageInfo: PageInfo!
+
+  #
+  list: [Popular!]!
+}
+
+#
+type Query {
+  #
+  identity(address: String!, network: Network): UserIdentity!
+
+  #
+  recommendations(
+    address: String!
+    filter: RecommFilter
+    network: Network
+    first: Int
+    after: String
+  ): RecommendationResponse!
+
+  #
+  connections(
+    fromAddr: String!
+    toAddrList: [String!]!
+    network: Network
+  ): [Connection!]!
+
+  #
+  homePage(network: Network): HomePage!
+
+  #
+  rankings(
+    network: Network
+    type: ConnectionType
+    first: Int
+    after: String
+  ): UserIdentityPage!
+
+  #
+  popular(
+    fromAddr: String
+    tags: TagsInput!
+    network: Network
+    first: Int
+    after: String
+  ): PopularPage!
+
+  #
+  featured(fromAddr: String, network: Network): [Popular!]!
+
+  #
+  nftOwners(contract: String!, tokenId: String): [NFTOwner!]
+
+  #
+  twitterRankings(
+    fromAddr: String
+    network: Network
+    first: Int
+    after: String
+  ): TwitterRankingPage!
+
+  #
+  proof(
+    fromAddr: String!
+    toAddr: String!
+    namespace: String
+    network: Network
+  ): String!
+    @deprecated(
+      reason: "`proof` is deprecated. Use `connections.proof` instead."
+    )
+
+  #
+  followStatus(
+    fromAddr: String!
+    toAddr: String!
+    namespace: String
+    network: Network
+  ): FollowStatus
+    @deprecated(
+      reason: "`followStatus` is deprecated. Use `connections.followStatus` instead."
+    )
+
+  #
+  followingAlias(
+    fromAddr: String!
+    toAddr: String!
+    namespace: String
+    network: Network
+  ): String!
+    @deprecated(
+      reason: "`followingAlias` is deprecated. Use `connections.alias` instead."
+    )
+}
+
+#
+type Ranking {
+  #
+  address: String!
+
+  #
+  domain: String!
+
+  #
+  avatar: String!
+
+  #
+  followerCount: Int!
+
+  #
+  isFollowing: Boolean!
+
+  #
+  verifiable: Boolean!
+
+  #
+  twitterHandle: String!
+
+  #
+  twitterFollowersCount: Int!
+}
+
+#
+enum RecommFilter {
+  #
+  SOCIAL
+
+  #
+  NFT
+
+  #
+  DEFI
+
+  #
+  GAME
+}
+
+#
+type Recommendation {
+  #
+  address: String!
+
+  #
+  domain: String!
+
+  #
+  ens: String! @deprecated(reason: "`ens` is deprecated. Use `domain` instead.")
+
+  #
+  avatar: String!
+
+  #
+  followerCount: Int!
+
+  #
+  recommendationReason: String!
+}
+
+#
+type RecommendationPage {
+  #
+  pageInfo: PageInfo!
+
+  #
+  list: [Recommendation!]!
+}
+
+#
+type RecommendationResponse {
+  #
+  result: RecommendationResponse_Result!
+
+  #
+  data: RecommendationPage
+}
+
+#
+enum RecommendationResponse_Result {
+  #
+  SUCCESS
+
+  #
+  INDEXING
+}
+
+#
+input RegisterKeyInput {
+  #
+  address: String!
+
+  #
+  message: String!
+
+  #
+  signature: String!
+
+  #
+  network: Network
+}
+
+#
+type RegisterKeyResponse {
+  #
+  result: RegisterKeyResponse_Result!
+}
+
+#
+enum RegisterKeyResponse_Result {
+  #
+  SUCCESS
+
+  #
+  FAILED
+}
+
+#
+type SetAliasResponse {
+  #
+  result: SetAliasResponse_Result!
+}
+
+#
+enum SetAliasResponse_Result {
+  #
+  SUCCESS
+
+  #
+  FAILED
+
+  #
+  INVALID_ADDRESS
+
+  #
+  AUTHENTICATION_FAILED
+
+  #
+  EMPTY_NAMESPACE
+
+  #
+  UNFOLLOWED
+}
+
+#
+type SetProfileResponse {
+  #
+  result: SetProfileResponse_Result!
+}
+
+#
+enum SetProfileResponse_Result {
+  #
+  SUCCESS
+
+  #
+  UNSUPPORTED_NETWORK
+
+  #
+  INVALID_ADDRESS
+
+  #
+  AUTHENTICATION_FAILED
+
+  #
+  PROFILE_NOT_EXIST
+}
+
+#
+type SetTwitterHandleResponse {
+  #
+  result: SetTwitterHandleResponse_Result!
+}
+
+#
+enum SetTwitterHandleResponse_Result {
+  #
+  SUCCESS
+
+  #
+  INVALID_ADDRESS
+
+  #
+  HANDLE_EXISTS
+}
+
+#
+input SigningInput {
+  #
+  toAddr: String!
+
+  #
+  signature: String!
+
+  #
+  operation: String!
+
+  #
+  type: ConnectionType
+}
+
+#
+type Social {
+  #
+  twitter: String!
+}
+
+#
+input SubscribeInput {
+  #
+  email: String!
+
+  #
+  address: String
+}
+
+#
+type SubscribeResponse {
+  #
+  result: SubscribeResponse_Result!
+}
+
+#
+enum SubscribeResponse_Result {
+  #
+  SUCCESS
+}
+
+#
+enum Tag {
+  #
+  PLAZA
+
+  #
+  FEATURED
+
+  #
+  NFTMARKET
+}
+
+#
+input TagsInput {
+  #
+  list: [Tag!]!
+}
+
+#
+scalar Time
+
+#
+type Twitter {
+  #
+  handle: String!
+
+  #
+  avatar: String!
+
+  #
+  verified: Boolean!
+
+  # verification tweet id.
+  tweetId: String!
+
+  # twitter followers count updated every day.
+  followerCount: Int!
+
+  #
+  followersCount: Int!
+    @deprecated(
+      reason: "`followersCount` is deprecated. Use `followerCount` instead."
+    )
+}
+
+#
+type TwitterRankingPage {
+  #
+  MetricsCount: MetricsCount!
+
+  #
+  pageInfo: PageInfo!
+
+  #
+  list: [Ranking!]!
+}
+
+#
+type UnFollowResponse {
+  #
+  result: UnFollowResponse_Result!
+}
+
+#
+enum UnFollowResponse_Result {
+  #
+  SUCCESS
+
+  #
+  FAILED
+
+  #
+  INVALID_ADDRESS
+
+  #
+  AUTHENTICATION_FAILED
+
+  #
+  EMPTY_NAMESPACE
+
+  #
+  UNFOLLOWED
+}
+
+#
+input UpdateConnectionInput {
+  #
+  fromAddr: String!
+
+  #
+  toAddr: String!
+
+  #
+  signature: String!
+
+  #
+  operation: String!
+
+  #
+  type: ConnectionType
+
+  #
+  signingKey: String!
+
+  #
+  namespace: String
+
+  #
+  alias: String
+
+  #
+  network: Network
+}
+
+#
+scalar Upload
+
+#
+type UserIdentity {
+  #
+  address: String!
+
+  # Ethereum: ENS updated every week; Solana: SNS from Bonfida.
+  domain: String!
+
+  #
+  ens: String! @deprecated(reason: "`ens` is deprecated. Use `domain` instead.")
+
+  #
+  social: Social!
+    @deprecated(reason: "`social` is deprecated. Use `twitter` instead.")
+
+  # Ethereum: ENS avatar updated every week; Solana: customized profile avatar
+  avatar: String!
+
+  # The time of user's first sent transaction
+  joinTime: String!
+
+  # Twitter bound to the address
+  twitter: Twitter!
+
+  #
+  followerCount(namespace: String, type: ConnectionType): Int!
+
+  #
+  followingCount(namespace: String, type: ConnectionType): Int!
+
+  #
+  followings(
+    namespace: String
+    type: ConnectionType
+    first: Int
+    after: String
+  ): ConnectionIdentityPage!
+
+  #
+  followers(
+    namespace: String
+    type: ConnectionType
+    first: Int
+    after: String
+  ): ConnectionIdentityPage!
+
+  # mutually followed
+  friends(
+    namespace: String
+    type: ConnectionType
+    first: Int
+    after: String
+  ): ConnectionIdentityPage!
+}
+
+#
+type UserIdentityPage {
+  #
+  pageInfo: PageInfo!
+
+  #
+  list: [UserIdentity!]!
+}
