@@ -1,6 +1,7 @@
 //import { MetaMaskInpageProvider } from '@metamask/providers';
 // import { MetaMaskInpageProvider } from "@metamask/providers/dist/MetaMaskInpageProvider";
 import ethers from 'ethers'
+import { Moralis as MoralisDef } from 'moralis'
 
 declare global {
 	interface Window {
@@ -24,4 +25,6 @@ declare global {
 		images?: MediaURI[]
 		text: string
 	}
+	const Moralis: MoralisDef
+
 }

@@ -1,0 +1,6 @@
+schema: https://api.cybertino.io/connect/
+documents: './**/*.tsx'
+generates:
+  graphql/generated.ts:
+    plugins:
+      - typescript

@@ -44,6 +44,8 @@ import config from '@/utils/config.json'
 import { useCheckRegistered } from '@/hooks/useCheckRegistered'
 import { useRouter } from 'next/router'
 import { upload } from '@fleekhq/fleek-storage-js'
+import safeFileName from 'slugify'
+import useMetaTransaction from '@/hooks/useMetaTransaction'
 
 const s3 = new S3({
 	accessKeyId: process.env.NEXT_PUBLIC_FLEEK_API_KEY,
@@ -79,12 +81,12 @@ const NewGreet = () => {
 	const [modalOpened, setModalOpened] = useState<boolean>(false)
 	const [txLoading, setTxLoading] = useState<boolean>(false)
 	const [txHash, setTxHash] = useState<string>('')
+	const gaslessTransaction = useMetaTransaction<Greet>(config.contractAddress.Greet, GreetAbi.abi)
 	const { data, error, isLoading, isFetching, fetch } = useMoralisQuery(
 		'NewUser',
 		(q) => q.equalTo('userAddress', user?.get('ethAddress')).limit(1),
 		[user?.get('ethAddress')]
 	)
-
 
 	let imageSize: string = useMemo(
 		() => (width <= theme.breakpoints.sm ? '100px' : '160px'),
@@ -118,8 +120,6 @@ const NewGreet = () => {
 	// },[])
 
 	const handlePublish = async () => {
-		
-
 		//Check text input and file
 		if (!text && preview.length === 0) {
 			hideNotification('empty')
@@ -137,13 +137,11 @@ const NewGreet = () => {
 
 		let images: MediaURI[] | undefined
 
-
 		//If there are any files, upload it to Fleek
 		if (preview.length > 0) {
 			images = await uploadAllMediaFile()
 		}
 
-		
 		let greetUserName = !isLoading && !isFetching && data[0].get('userName')
 
 		//Set the metadata of the post
@@ -154,7 +152,6 @@ const NewGreet = () => {
 			text: text,
 		}
 
-		
 		let tokenURI: string = ''
 
 		//Upload the metadata to Fleek
@@ -180,7 +177,7 @@ const NewGreet = () => {
 						message: `Greet uploaded: ${Math.round(
 							(event.loaded / event.total) * 100
 						)}%`,
-					})	
+					})
 				},
 			})
 			setMetadataURI(uploadMetadata.publicUrl)
@@ -191,7 +188,6 @@ const NewGreet = () => {
 				message: 'Greet uploaded',
 				autoClose: 2000,
 			})
-			
 		} catch (error) {
 			showNotification({
 				id: 'metadataError',
@@ -216,36 +212,50 @@ const NewGreet = () => {
 		let estimateGas = web3Library.utils.hexlify(
 			gasPrice?.mul(120).div(100) || 0
 		)
-		
-		//Mint/create the post on the smart contract
-		try {
-			setTxLoading(true)
 
-			let tx = await greetContract.mint(1, tokenURI, {
-				gasLimit: web3Library.utils.hexlify(500000),
-				gasPrice: estimateGas,
-			})
-			setTxHash(tx.hash)
-			await tx.wait()
-			setTxLoading(false)
-			showNotification({
-				title: 'Success',
-				message: 'Greet Posted',
-				autoClose: 2500,
-				disallowClose: true,
-				color: 'green',
-			})
-		} catch (error) {
-			setTxLoading(false)
-			showNotification({
-				title: 'Error',
-				message: 'Create Greet failed, please try again',
-				autoClose: 2500,
-				disallowClose: true,
-				color: 'red',
-				icon: <BiErrorCircle size='100%' />,
-			})
-		}
+		//Mint/create the post on the smart contract
+			try {
+				if (gaslessTransaction.ready && gaslessTransaction.contract && account) {
+					setTxLoading(true)
+
+					let tx = await greetContract.mint(1, tokenURI, {
+						gasLimit: web3Library.utils.hexlify(500000),
+						gasPrice: estimateGas,
+					})
+					// let functionData =
+					// 	await gaslessTransaction.contract?.populateTransaction.mint(
+					// 		1,
+					// 		tokenURI
+					// 	)
+					// let response = await gaslessTransaction.sendMetaTransaction(
+					// 	functionData,
+					// 	account
+					// )
+					// //let txt = await
+					// setTxHash(response)
+					// await gaslessTransaction.waitTransaction(response)
+					setTxHash(tx.hash)
+					await tx.wait()
+					setTxLoading(false)
+					showNotification({
+						title: 'Success',
+						message: 'Greet Posted',
+						autoClose: 2500,
+						disallowClose: true,
+						color: 'green',
+					})
+				}
+			} catch (error) {
+				setTxLoading(false)
+				showNotification({
+					title: 'Error',
+					message: 'Create Greet failed, please try again',
+					autoClose: 2500,
+					disallowClose: true,
+					color: 'red',
+					icon: <BiErrorCircle size='100%' />,
+				})
+			}
 	}
 
 	const uploadAllMediaFile = async () => {
@@ -295,13 +305,13 @@ const NewGreet = () => {
 	}
 
 	return (
-		<Page title='test' homePage={false}>
+		<>
 			<Modal
 				opened={txLoading}
 				title={<Title order={3}>Creating New Greet</Title>}
 				centered
 				size='lg'
-				withCloseButton={false}
+				withCloseButton={true}
 				onClose={() => !txLoading && setModalOpened(false)}
 			>
 				<>
@@ -316,7 +326,7 @@ const NewGreet = () => {
 					<Box mt='sm'>{txLoading && <Loader />}</Box>
 				</>
 			</Modal>
-			
+
 			<Card
 				p='lg'
 				style={{
@@ -420,6 +430,7 @@ const NewGreet = () => {
 						minRows={8}
 						variant='default'
 						onChange={(e) => setText(e.target.value)}
+						pt='xl'
 					/>
 				</Box>
 				<Group mt='40px' position='center' style={{ position: 'relative' }}>
@@ -432,7 +443,7 @@ const NewGreet = () => {
 					</Button>
 				</Group>
 			</Card>
-		</Page>
+		</>
 	)
 }
 
@@ -444,14 +455,14 @@ const toBase64 = (file: File) =>
 		reader.onerror = (error) => reject(error)
 	})
 
-
 const uploadMediaFile = async (file: File) => {
 	return upload({
 		...fleekCredential,
 
-		key: `mediaFile/${new Date().getTime().toString()}${file.name
-			.replace(/[^a-z0-9]/gi, '_')
-			.toLowerCase()}`,
+		key: `mediaFile/${new Date().getTime().toString()}${safeFileName(
+			file.name,
+			{ remove: /"<>#%\{\}\|\\\^~\[\]`;\?:@=&/g }
+		).toLowerCase()}`,
 
 		data: file,
 
@@ -464,5 +475,4 @@ const uploadMediaFile = async (file: File) => {
 		},
 	})
 }
-
 export default NewGreet

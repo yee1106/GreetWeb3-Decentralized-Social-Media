@@ -16,6 +16,7 @@ export type { GreetUser } from "./GreetUser";
 export type { IGreetUser } from "./IGreetUser";
 export type { EIP712Base } from "./EIP712Base";
 export type { EIP712MetaTransaction } from "./EIP712MetaTransaction";
+export type { Sign } from "./Sign";
 export type { Text } from "./Text";
 export type { Text2 } from "./Text2";
 
@@ -34,5 +35,6 @@ export { GreetUser__factory } from "./factories/GreetUser__factory";
 export { IGreetUser__factory } from "./factories/IGreetUser__factory";
 export { EIP712Base__factory } from "./factories/EIP712Base__factory";
 export { EIP712MetaTransaction__factory } from "./factories/EIP712MetaTransaction__factory";
+export { Sign__factory } from "./factories/Sign__factory";
 export { Text__factory } from "./factories/Text__factory";
 export { Text2__factory } from "./factories/Text2__factory";

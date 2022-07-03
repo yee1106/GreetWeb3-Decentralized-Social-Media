@@ -1,915 +1,728 @@
-#
 directive @admin on FIELD_DEFINITION
 
-#
-type AliasResponse {
-  #
-  result: ConnectionResult!
+input AckAllNotificationsInput {
+  address: String!
+  namespace: String
+  network: Network = ETH
+
+  """
+  Unix timestamp in millisecond.
+  Use current timestamp.
+  """
+  timestamp: String!
+  operation: String!
+  signature: String!
+  signingKey: String!
 }
 
-#
-type AuthResponse {
-  #
-  result: AuthResponse_Result!
+type AckAllNotificationsResponse {
+  result: AckAllNotificationsResponse_Result!
+}
 
-  #
+enum AckAllNotificationsResponse_Result {
+  SUCCESS
+  INVALID_ADDRESS
+  INVALID_OPERATION
+  INVALID_SIGNATURE
+  OPERATION_EXPIRED
+  INVALID_TIMESTAMP
+}
+
+input AckNotificationsInput {
+  address: String!
+  namespace: String
+  network: Network = ETH
+  operation: String!
+  signature: String!
+  signingKey: String!
+  notificationIds: [String!]!
+}
+
+type AckNotificationsResponse {
+  result: AckNotificationsResponse_Result!
+}
+
+enum AckNotificationsResponse_Result {
+  SUCCESS
+  INVALID_ADDRESS
+  INVALID_OPERATION
+  INVALID_SIGNATURE
+  OPERATION_EXPIRED
+  ACK_FAILED
+}
+
+type AliasResponse {
+  result: AliasResponse_Result!
+}
+
+enum AliasResponse_Result {
+  SUCCESS
+  FAILED
+  CONNECTED
+  DISCONNECTED
+  INVALID_ADDRESS
+  DUPLICATE_ADDRESS
+  INVALID_SIGNATURE
+  INVALID_OPERATION
+  SIGNING_KEY_EXPIRED
+  OPERATION_EXPIRED
+}
+
+type AuthResponse {
+  result: AuthResponse_Result!
   authToken: String!
 }
 
-#
 enum AuthResponse_Result {
-  #
-  SUCCESS
-
-  #
-  AUTHENTICATION_FAILED
+  DEPRECATED_API
 }
 
-#
 type BatchConnectResponse {
-  #
-  result: ConnectionResult!
-
-  #
+  result: BatchConnectResponse_Result!
   alreadyFollowed: [String!]
-
-  #
   successFollowed: [String!]
-
-  #
   failToFollow: [String!]
 }
 
-#
-input BatchUpdateConnectionInput {
-  #
-  fromAddr: String!
-
-  #
-  signingInputs: [SigningInput!]!
-
-  #
-  signingKey: String!
-
-  #
-  namespace: String
-
-  #
-  network: Network
+enum BatchConnectResponse_Result {
+  SUCCESS
+  FAILED
+  CONNECTED
+  DISCONNECTED
+  INVALID_ADDRESS
+  DUPLICATE_ADDRESS
+  INVALID_SIGNATURE
+  INVALID_OPERATION
+  SIGNING_KEY_EXPIRED
+  OPERATION_EXPIRED
 }
 
-#
-type Connect {
-  #
-  address: String!
+input BatchUpdateConnectionInput {
+  fromAddr: String!
+  signingInputs: [SigningInput!]!
+  signingKey: String!
+  namespace: String
+  network: Network = ETH
+}
 
-  #
-  domain: String!
-
-  #
-  ens: String! @deprecated(reason: "`ens` is deprecated. Use `domain` instead.")
-
-  #
-  avatar: String!
-
-  #
-  alias: String!
-
-  #
+type BiConnectAcceptedNotification implements Notification {
+  id: ID!
+  toAddress: String!
+  network: Network!
   namespace: String!
+  type: NotificationType!
+  hasRead: Boolean!
+  timestamp: String!
+  fromAddress: String!
+}
 
-  #
+input BiConnectInput {
+  fromAddr: String!
+  toAddr: String!
+  instruction: BiConnInstruction!
+  operation: String!
+  signature: String!
+  signingKey: String!
+  namespace: String
+  network: Network = ETH
+}
+
+type BiConnectReceivedNotification implements Notification {
+  id: ID!
+  toAddress: String!
+  network: Network!
+  namespace: String!
+  type: NotificationType!
+  hasRead: Boolean!
+  timestamp: String!
+  fromAddress: String!
+}
+
+type BiConnectResponse {
+  result: BiConnectResponse_Result!
+  message: String!
+}
+
+enum BiConnectResponse_Result {
+  SUCCESS
+  INVALID_SIGNATURE
+  INVALID_OPERATION
+  INVALID_ADDRESS
+  INVALID_PARAMETER
+  EXCEED_LIMIT
+  INCONSISTENCY_ERROR
+  OPERATION_EXPIRED
+}
+
+type BiConnEvent implements Event {
+  hash: String!
+  parentHash: String!
+  fromAddr: String!
+  toAddr: String!
+  network: Network!
+  namespace: String!
+  createdAt: String!
+  isAnchor: Boolean!
+  proof: Proof!
+  instruction: BiConnInstruction!
+}
+
+enum BiConnInstruction {
+  INIT
+  ACCEPT
+  REJECT
+  TERMINATE
+  BLOCK
+  UNBLOCK
+}
+
+enum BiConnState {
+  EMPTY
+  PENDING
+  CONNECTED
+  BLACKLIST
+}
+
+type BidirectionalConnection {
+  from: String!
+  to: String!
+  network: Network!
+  state: BiConnState!
+  direction: Direction!
+  namespace: String!
+  latestHash: String!
+  updatedAt: String!
+  latestEvent: BiConnEvent
+  latestAnchorEvent: BiConnEvent
+}
+
+type Connect {
+  address: String!
+  domain: String!
+  ens: String! @deprecated(reason: "`ens` is deprecated. Use `domain` instead.")
+  avatar: String!
+  alias: String!
+  namespace: String!
   type: ConnectionType!
-
-  #
-  lastModifiedTime: String!
-    @deprecated(reason: "`lastModifiedTime` is deprecated.")
-
-  #
+  lastModifiedTime: String! @deprecated(reason: "`lastModifiedTime` is deprecated.")
   verifiable: Boolean!
 }
 
-#
-type ConnectResponse {
-  #
-  result: ConnectionResult!
-}
-
-#
 type Connection {
-  #
   fromAddr: String!
-
-  #
   toAddr: String!
-
-  #
   followStatus: FollowStatus!
-
-  #
   namespace: String!
 
-  # The alias set by the fromAddr for toAddr
+  """The alias set by the fromAddr for toAddr."""
   alias: String!
-
-  #
   network: Network!
 
-  # connection type, default is FOLLOW
+  """Connection type. Default is FOLLOW."""
   type: ConnectionType!
-
-  #
   updatedAt: String!
-
-  #
   createdAt: String!
-
-  #
-  proof: String!
+  proof: String! @deprecated(reason: "`proof` is deprecated. Use `latestEvent` to retrieve it.")
+  latestEvent: ConnectionEvent
+  latestAnchorEvent: ConnectionEvent
 }
 
-#
-type ConnectionIdentityPage {
-  #
-  pageInfo: PageInfo!
+type ConnectionEvent implements Event {
+  hash: String!
+  parentHash: String!
+  fromAddr: String!
+  toAddr: String!
+  network: Network!
+  namespace: String!
+  createdAt: String!
+  isAnchor: Boolean!
+  proof: Proof!
+  type: ConnectionType!
+  operator: Boolean!
+}
 
-  #
+type ConnectionIdentityPage {
+  pageInfo: PageInfo!
   list: [Connect!]!
 }
 
-#
-enum ConnectionResult {
-  #
-  SUCCESS
-
-  #
-  FAILED
-
-  #
-  CONNECTED
-
-  #
-  DISCONNECTED
-
-  #
-  INVALID_ADDRESS
-
-  #
-  DUPLICATE_ADDRESS
-
-  #
-  INVALID_SIGNATURE
-
-  #
-  INVALID_OPERATION
-
-  #
-  SIGNING_KEY_EXPIRED
+type ConnectionSummary {
+  userCount: Int!
+  userDelta: Int!
+  connectionCount: Int!
+  connectionDelta: Int!
+  namespaceCount: Int!
 }
 
-#
 enum ConnectionType {
-  #
   FOLLOW
-
-  #
   LIKE
-
-  #
   REPORT
-
-  #
   WATCH
-
-  #
   VOTE
 }
 
-#
-type DisconnectResponse {
-  #
-  result: ConnectionResult!
+type ConnectResponse {
+  result: ConnectResponse_Result!
 }
 
-#
+enum ConnectResponse_Result {
+  SUCCESS
+  FAILED
+  CONNECTED
+  DISCONNECTED
+  INVALID_ADDRESS
+  DUPLICATE_ADDRESS
+  INVALID_SIGNATURE
+  INVALID_OPERATION
+  SIGNING_KEY_EXPIRED
+  OPERATION_EXPIRED
+}
+
+enum Direction {
+  BIDIRECTION
+  FROM_TO
+  TO_FROM
+}
+
+type DisconnectResponse {
+  result: DisconnectResponse_Result!
+}
+
+enum DisconnectResponse_Result {
+  SUCCESS
+  FAILED
+  CONNECTED
+  DISCONNECTED
+  INVALID_ADDRESS
+  DUPLICATE_ADDRESS
+  INVALID_SIGNATURE
+  INVALID_OPERATION
+  SIGNING_KEY_EXPIRED
+  OPERATION_EXPIRED
+}
+
+interface Event {
+  hash: String!
+  parentHash: String!
+  fromAddr: String!
+  toAddr: String!
+  network: Network!
+  namespace: String!
+  createdAt: String!
+  isAnchor: Boolean!
+  proof: Proof!
+}
+
+type EventPage {
+  pageInfo: PageInfo!
+  list: [Event!]!
+}
+
 type FollowResponse {
-  #
   result: FollowResponse_Result!
 }
 
-#
 enum FollowResponse_Result {
-  #
-  SUCCESS
-
-  #
-  FAILED
-
-  #
-  INVALID_ADDRESS
-
-  #
-  AUTHENTICATION_FAILED
-
-  #
-  EMPTY_NAMESPACE
-
-  #
-  FOLLOWED
+  DEPRECATED_API
 }
 
-#
 type FollowStatus {
-  #
   isFollowed: Boolean!
-
-  #
   isFollowing: Boolean!
 }
 
-#
+type Github {
+  username: String!
+  gistId: String!
+  userId: Int!
+}
+
 type HomePage {
-  #
   userCount: Int!
-
-  #
   connectionCount: Int!
-
-  #
   indexedUserCount: Int!
-
-  #
   indexedConnectionCount: Int!
 }
 
-#
 type MetricsCount {
-  #
   top10Count: Int!
-
-  #
   top100Count: Int!
-
-  #
   top1000Count: Int!
 }
 
-#
 type Mutation {
-  #
   registerKey(input: RegisterKeyInput!): RegisterKeyResponse!
-
-  #
   connect(input: UpdateConnectionInput!): ConnectResponse!
-
-  #
   disconnect(input: UpdateConnectionInput!): DisconnectResponse!
-
-  #
   alias(input: UpdateConnectionInput!): AliasResponse!
-
-  #
   batchConnect(input: BatchUpdateConnectionInput!): BatchConnectResponse!
-
-  #
-  setTwitterHandle(
-    address: String!
-    handle: String!
-    network: Network
-  ): SetTwitterHandleResponse!
-
-  #
+  bidirectionalConnect(input: BiConnectInput!): BiConnectResponse!
+  ackNotifications(input: AckNotificationsInput!): AckNotificationsResponse!
+  ackAllNotifications(input: AckAllNotificationsInput!): AckAllNotificationsResponse!
+  verifyTwitter(address: String!, handle: String!, network: Network = ETH, namespace: String): VerifyTwitterResponse!
+  verifyGithub(address: String!, gistId: String!, network: Network = ETH, namespace: String): VerifyGithubResponse!
+  setTwitterHandle(address: String!, handle: String!, network: Network = ETH): SetTwitterHandleResponse!
   subscribe(input: [SubscribeInput!]!): SubscribeResponse!
-
-  #
-  auth(address: String!, signature: String!, network: Network): AuthResponse!
-    @deprecated(
-      reason: "`auth` for centralized authorization is deprecated. To make data verifiable, use `registerKey` instead."
-    )
-
-  #
-  follow(
-    fromAddr: String!
-    toAddr: String!
-    signature: String!
-    network: Network
-    alias: String
-    namespace: String
-  ): FollowResponse!
-    @deprecated(
-      reason: "`follow` is deprecated. To make data verifiable, use `connect` instead."
-    )
-
-  #
-  unfollow(
-    fromAddr: String!
-    toAddr: String!
-    signature: String!
-    network: Network
-    namespace: String
-  ): UnFollowResponse!
-    @deprecated(
-      reason: "`unfollow` is deprecated. To make data verifiable, use `disconnect` instead."
-    )
-
-  #
-  setAlias(
-    fromAddr: String!
-    toAddr: String!
-    signature: String!
-    alias: String!
-    network: Network
-    namespace: String
-  ): SetAliasResponse!
-    @deprecated(
-      reason: "`setAlias` is deprecated. To make data verifiable, use `alias` instead."
-    )
-
-  #
-  setProfile(
-    address: String!
-    avatar: String
-    domain: String
-    signature: String!
-    network: Network!
-  ): SetProfileResponse!
+  auth(address: String!, signature: String!, network: Network): AuthResponse! @deprecated(reason: "`auth` for centralized authorization is deprecated. To make data verifiable, use `registerKey` instead.")
+  follow(fromAddr: String!, toAddr: String!, signature: String!, network: Network, alias: String, namespace: String): FollowResponse! @deprecated(reason: "`follow` is deprecated. To make data verifiable, use `connect` instead.")
+  unfollow(fromAddr: String!, toAddr: String!, signature: String!, network: Network, namespace: String): UnFollowResponse! @deprecated(reason: "`unfollow` is deprecated. To make data verifiable, use `disconnect` instead.")
+  setAlias(fromAddr: String!, toAddr: String!, signature: String!, alias: String!, network: Network, namespace: String): SetAliasResponse! @deprecated(reason: "`setAlias` is deprecated. To make data verifiable, use `alias` instead.")
+  setProfile(address: String!, avatar: String, domain: String, signature: String!, network: Network!): SetProfileResponse! @deprecated(reason: "`setProfile` is deprecated.")
 }
 
-#
-type NFTOwner {
-  #
-  tokenId: String!
-
-  #
-  owner: String!
-
-  #
-  twitter: Twitter
-}
-
-#
 enum Network {
-  #
+  """Ethereum network."""
   ETH
 
-  #
+  """Solana network."""
   SOLANA
 }
 
-#
+type NewConnectionNotification implements Notification {
+  id: ID!
+  toAddress: String!
+  network: Network!
+  namespace: String!
+  type: NotificationType!
+  hasRead: Boolean!
+  timestamp: String!
+  fromAddress: String!
+  connectionType: ConnectionType!
+}
+
+type NFTOwner {
+  tokenId: String!
+  owner: String!
+  twitter: Twitter
+}
+
 interface Node {
-  #
   id: ID!
 }
 
-#
+interface Notification {
+  id: ID!
+  toAddress: String!
+  network: Network!
+  namespace: String!
+  hasRead: Boolean!
+  type: NotificationType!
+  timestamp: String!
+}
+
+type NotificationPage {
+  pageInfo: PageInfo!
+  list: [Notification!]!
+}
+
+enum NotificationType {
+  NEW_CONNECTION
+  BICONNECT_RECEIVED
+  BICONNECT_ACCEPTED
+}
+
 type PageInfo {
-  #
   startCursor: String!
-
-  #
   endCursor: String!
-
-  #
   hasNextPage: Boolean!
-
-  #
   hasPreviousPage: Boolean!
 }
 
-#
 scalar Percentage
 
-#
 type Popular {
-  #
   address: String!
-
-  #
   domain: String!
-
-  #
   ens: String! @deprecated(reason: "`ens` is deprecated. Use `domain` instead.")
-
-  #
   recommendationReason: String!
-
-  #
   followerCount: Int!
-
-  #
   isFollowing: Boolean!
-
-  #
   avatar: String!
 }
 
-#
 type PopularPage {
-  #
   pageInfo: PageInfo!
-
-  #
   list: [Popular!]!
 }
 
-#
-type Query {
-  #
-  identity(address: String!, network: Network): UserIdentity!
-
-  #
-  recommendations(
-    address: String!
-    filter: RecommFilter
-    network: Network
-    first: Int
-    after: String
-  ): RecommendationResponse!
-
-  #
-  connections(
-    fromAddr: String!
-    toAddrList: [String!]!
-    network: Network
-  ): [Connection!]!
-
-  #
-  homePage(network: Network): HomePage!
-
-  #
-  rankings(
-    network: Network
-    type: ConnectionType
-    first: Int
-    after: String
-  ): UserIdentityPage!
-
-  #
-  popular(
-    fromAddr: String
-    tags: TagsInput!
-    network: Network
-    first: Int
-    after: String
-  ): PopularPage!
-
-  #
-  featured(fromAddr: String, network: Network): [Popular!]!
-
-  #
-  nftOwners(contract: String!, tokenId: String): [NFTOwner!]
-
-  #
-  twitterRankings(
-    fromAddr: String
-    network: Network
-    first: Int
-    after: String
-  ): TwitterRankingPage!
-
-  #
-  proof(
-    fromAddr: String!
-    toAddr: String!
-    namespace: String
-    network: Network
-  ): String!
-    @deprecated(
-      reason: "`proof` is deprecated. Use `connections.proof` instead."
-    )
-
-  #
-  followStatus(
-    fromAddr: String!
-    toAddr: String!
-    namespace: String
-    network: Network
-  ): FollowStatus
-    @deprecated(
-      reason: "`followStatus` is deprecated. Use `connections.followStatus` instead."
-    )
-
-  #
-  followingAlias(
-    fromAddr: String!
-    toAddr: String!
-    namespace: String
-    network: Network
-  ): String!
-    @deprecated(
-      reason: "`followingAlias` is deprecated. Use `connections.alias` instead."
-    )
+type Proof {
+  content: String!
+  digest: String!
+  signature: String!
+  signingKey: String!
+  signingKeyAuth: SigningKeyAuth!
+  arweaveTxHash: String!
 }
 
-#
+type Query {
+  identity(address: String, network: Network = ETH): UserIdentity!
+  recommendations(address: String, filter: RecommFilter, network: Network = ETH, namespace: String, first: Int, after: String): RecommendationResponse!
+  connections(fromAddr: String!, toAddrList: [String!]!, network: Network = ETH): [Connection!]!
+  bidirectionalConnections(fromAddr: String!, toAddrList: [String!]!, network: Network = ETH): [BidirectionalConnection!]!
+  connectionEvent(hash: String!): Event!
+  connectionEvents(address: String, namespace: String, network: Network, first: Int, after: String): EventPage!
+  bidirectionalConnectionEvent(hash: String!): Event!
+  bidirectionalConnectionEvents(address: String, namespace: String, network: Network, first: Int, after: String): EventPage!
+  connectionSummary(namespace: String): ConnectionSummary!
+  homePage(network: Network = ETH): HomePage!
+  rankings(network: Network = ETH, type: ConnectionType, namespaces: [String!], first: Int, after: String): UserIdentityPage!
+  popular(fromAddr: String, tags: TagsInput!, network: Network = ETH, first: Int, after: String): PopularPage!
+  featured(fromAddr: String, network: Network = ETH): [Popular!]!
+  nftOwners(contract: String!, tokenId: String): [NFTOwner!]
+  twitterRankings(fromAddr: String, network: Network = ETH, first: Int, after: String): TwitterRankingPage!
+  proof(fromAddr: String!, toAddr: String!, namespace: String, network: Network = ETH): String! @deprecated(reason: "`proof` is deprecated. Use `connections.proof` instead.")
+  followStatus(fromAddr: String!, toAddr: String!, namespace: String, network: Network = ETH): FollowStatus @deprecated(reason: "`followStatus` is deprecated. Use `connections.followStatus` instead.")
+  followingAlias(fromAddr: String!, toAddr: String!, namespace: String, network: Network = ETH): String! @deprecated(reason: "`followingAlias` is deprecated. Use `connections.alias` instead.")
+}
+
 type Ranking {
-  #
   address: String!
-
-  #
   domain: String!
-
-  #
   avatar: String!
-
-  #
   followerCount: Int!
-
-  #
   isFollowing: Boolean!
-
-  #
   verifiable: Boolean!
-
-  #
   twitterHandle: String!
-
-  #
   twitterFollowersCount: Int!
 }
 
-#
-enum RecommFilter {
-  #
-  SOCIAL
-
-  #
-  NFT
-
-  #
-  DEFI
-
-  #
-  GAME
-}
-
-#
 type Recommendation {
-  #
   address: String!
-
-  #
   domain: String!
-
-  #
   ens: String! @deprecated(reason: "`ens` is deprecated. Use `domain` instead.")
-
-  #
   avatar: String!
-
-  #
   followerCount: Int!
-
-  #
   recommendationReason: String!
 }
 
-#
 type RecommendationPage {
-  #
   pageInfo: PageInfo!
-
-  #
   list: [Recommendation!]!
 }
 
-#
 type RecommendationResponse {
-  #
   result: RecommendationResponse_Result!
-
-  #
   data: RecommendationPage
 }
 
-#
 enum RecommendationResponse_Result {
-  #
   SUCCESS
-
-  #
   INDEXING
 }
 
-#
-input RegisterKeyInput {
-  #
-  address: String!
-
-  #
-  message: String!
-
-  #
-  signature: String!
-
-  #
-  network: Network
+enum RecommFilter {
+  SOCIAL
+  NFT
+  DEFI
+  GAME
 }
 
-#
+input RegisterKeyInput {
+  address: String!
+  message: String!
+  signature: String!
+  network: Network = ETH
+}
+
 type RegisterKeyResponse {
-  #
   result: RegisterKeyResponse_Result!
 }
 
-#
 enum RegisterKeyResponse_Result {
-  #
   SUCCESS
-
-  #
   FAILED
 }
 
-#
 type SetAliasResponse {
-  #
   result: SetAliasResponse_Result!
 }
 
-#
 enum SetAliasResponse_Result {
-  #
-  SUCCESS
-
-  #
-  FAILED
-
-  #
-  INVALID_ADDRESS
-
-  #
-  AUTHENTICATION_FAILED
-
-  #
-  EMPTY_NAMESPACE
-
-  #
-  UNFOLLOWED
+  DEPRECATED_API
 }
 
-#
 type SetProfileResponse {
-  #
   result: SetProfileResponse_Result!
 }
 
-#
 enum SetProfileResponse_Result {
-  #
-  SUCCESS
-
-  #
-  UNSUPPORTED_NETWORK
-
-  #
-  INVALID_ADDRESS
-
-  #
-  AUTHENTICATION_FAILED
-
-  #
-  PROFILE_NOT_EXIST
+  DEPRECATED_API
 }
 
-#
 type SetTwitterHandleResponse {
-  #
   result: SetTwitterHandleResponse_Result!
 }
 
-#
 enum SetTwitterHandleResponse_Result {
-  #
   SUCCESS
-
-  #
   INVALID_ADDRESS
-
-  #
   HANDLE_EXISTS
 }
 
-#
 input SigningInput {
-  #
   toAddr: String!
-
-  #
   signature: String!
-
-  #
   operation: String!
-
-  #
-  type: ConnectionType
+  type: ConnectionType = FOLLOW
 }
 
-#
+type SigningKeyAuth {
+  address: String!
+  message: String!
+  signature: String!
+}
+
 type Social {
-  #
   twitter: String!
 }
 
-#
 input SubscribeInput {
-  #
   email: String!
-
-  #
   address: String
 }
 
-#
 type SubscribeResponse {
-  #
   result: SubscribeResponse_Result!
 }
 
-#
 enum SubscribeResponse_Result {
-  #
   SUCCESS
 }
 
-#
 enum Tag {
-  #
   PLAZA
-
-  #
   FEATURED
-
-  #
   NFTMARKET
 }
 
-#
 input TagsInput {
-  #
   list: [Tag!]!
 }
 
-#
 scalar Time
 
-#
 type Twitter {
-  #
+  """Twitter handle."""
   handle: String!
 
-  #
+  """Twitter avatar."""
   avatar: String!
-
-  #
   verified: Boolean!
 
-  # verification tweet id.
+  """Verification tweet id."""
   tweetId: String!
 
-  # twitter followers count updated every day.
-  followerCount: Int!
+  """Data source of twitter handle."""
+  source: String!
 
-  #
-  followersCount: Int!
-    @deprecated(
-      reason: "`followersCount` is deprecated. Use `followerCount` instead."
-    )
+  """Twitter followers count, updated every day."""
+  followerCount: Int!
+  followersCount: Int! @deprecated(reason: "`followersCount` is deprecated. Use `followerCount` instead.")
 }
 
-#
 type TwitterRankingPage {
-  #
   MetricsCount: MetricsCount!
-
-  #
   pageInfo: PageInfo!
-
-  #
   list: [Ranking!]!
 }
 
-#
 type UnFollowResponse {
-  #
   result: UnFollowResponse_Result!
 }
 
-#
 enum UnFollowResponse_Result {
-  #
-  SUCCESS
-
-  #
-  FAILED
-
-  #
-  INVALID_ADDRESS
-
-  #
-  AUTHENTICATION_FAILED
-
-  #
-  EMPTY_NAMESPACE
-
-  #
-  UNFOLLOWED
+  DEPRECATED_API
 }
 
-#
 input UpdateConnectionInput {
-  #
   fromAddr: String!
-
-  #
   toAddr: String!
-
-  #
   signature: String!
-
-  #
   operation: String!
-
-  #
-  type: ConnectionType
-
-  #
   signingKey: String!
-
-  #
   namespace: String
-
-  #
   alias: String
-
-  #
-  network: Network
+  network: Network = ETH
+  type: ConnectionType = FOLLOW
 }
 
-#
 scalar Upload
 
-#
 type UserIdentity {
-  #
   address: String!
 
-  # Ethereum: ENS updated every week; Solana: SNS from Bonfida.
+  """Ethereum: ENS updated every week; Solana: SNS from Bonfida."""
   domain: String!
-
-  #
   ens: String! @deprecated(reason: "`ens` is deprecated. Use `domain` instead.")
+  social: Social! @deprecated(reason: "`social` is deprecated. Use `twitter` instead.")
 
-  #
-  social: Social!
-    @deprecated(reason: "`social` is deprecated. Use `twitter` instead.")
-
-  # Ethereum: ENS avatar updated every week; Solana: customized profile avatar
+  """
+  Ethereum: ENS avatar updated every week; Solana: customized profile avatar.
+  """
   avatar: String!
 
-  # The time of user's first sent transaction
+  """The time of user's first sent transaction."""
   joinTime: String!
 
-  # Twitter bound to the address
+  """Twitter info bound to the address."""
   twitter: Twitter!
 
-  #
-  followerCount(namespace: String, type: ConnectionType): Int!
+  """Github info bound to the address."""
+  github: Github!
+  followerCount(namespace: String, namespaces: [String!], type: ConnectionType = FOLLOW): Int!
+  followingCount(namespace: String, namespaces: [String!], type: ConnectionType = FOLLOW): Int!
+  followings(namespace: String, namespaces: [String!], type: ConnectionType = FOLLOW, first: Int, after: String): ConnectionIdentityPage!
+  followers(namespace: String, namespaces: [String!], type: ConnectionType = FOLLOW, first: Int, after: String): ConnectionIdentityPage!
 
-  #
-  followingCount(namespace: String, type: ConnectionType): Int!
+  """Mutually followed."""
+  friends(namespace: String, namespaces: [String!], type: ConnectionType = FOLLOW, first: Int, after: String): ConnectionIdentityPage!
+  unreadNotificationCount(namespaces: [String!], types: [NotificationType!]): Int!
+  notifications(
+    namespaces: [String!]
 
-  #
-  followings(
-    namespace: String
-    type: ConnectionType
+    """
+    Unix timestamp in millisecond.
+    Empty means using the timestamp when the user acknowledged all notifications last time.
+    """
+    timestamp: String
+    types: [NotificationType!]
+    hasRead: Boolean
     first: Int
     after: String
-  ): ConnectionIdentityPage!
-
-  #
-  followers(
-    namespace: String
-    type: ConnectionType
-    first: Int
-    after: String
-  ): ConnectionIdentityPage!
-
-  # mutually followed
-  friends(
-    namespace: String
-    type: ConnectionType
-    first: Int
-    after: String
-  ): ConnectionIdentityPage!
+  ): NotificationPage!
 }
 
-#
 type UserIdentityPage {
-  #
   pageInfo: PageInfo!
-
-  #
   list: [UserIdentity!]!
 }
+
+type VerifyGithubResponse {
+  result: VerifyGithubResponse_Result!
+}
+
+enum VerifyGithubResponse_Result {
+  SUCCESS
+  FAILED
+  INVALID_ADDRESS
+  INVALID_HANDLE
+  UNSUPPORTED_NETWORK
+  ALREADY_VERIFIED
+  GIST_NOT_FOUND
+}
+
+type VerifyTwitterResponse {
+  result: VerifyTwitterResponse_Result!
+}
+
+enum VerifyTwitterResponse_Result {
+  SUCCESS
+  FAILED
+  INVALID_ADDRESS
+  INVALID_HANDLE
+  UNSUPPORTED_NETWORK
+  ALREADY_VERIFIED
+  TWEET_NOT_FOUND
+}
+

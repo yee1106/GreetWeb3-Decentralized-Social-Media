@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import {
 	Box,
 	Card,
@@ -34,8 +34,12 @@ import {
 } from 'react-icons/ai'
 import ImageGallery, { ReactImageGalleryItem } from 'react-image-gallery'
 import moment from 'moment'
-import { useMoralisQuery } from 'react-moralis'
+import { useMoralis, useMoralisQuery } from 'react-moralis'
 import Link from 'next/link'
+import config from '@/utils/config.json'
+import { useCheckRegistered } from '@/hooks/useCheckRegistered'
+import { hideNotification, showNotification } from '@mantine/notifications'
+import { BiImageAdd, BiErrorCircle } from 'react-icons/bi'
 //import fleekStorage from '@fleekhq/fleek-storage-js'
 
 // interface feed {
@@ -55,8 +59,7 @@ interface feedButtonProps {
 	liked?: boolean
 }
 
-let verifyLink =
-	'https://mumbai.polygonscan.com/address/0x254db072a0981919ab7f86351528324b3c954e40#readContract'
+let verifyLink = `https://mumbai.polygonscan.com/address/${config.contractAddress.Greet}#readContract`
 
 const Feed = (props: Feed) => {
 	const theme = useMantineTheme()
@@ -64,12 +67,84 @@ const Feed = (props: Feed) => {
 	let [mobile, setMobile] = useState<boolean>(false)
 	const [mobileMenuOpened, setMobileMenuOpened] = useState<boolean>(false)
 	const [MenuOpened, setMenuOpened] = useState<boolean>(false)
-	const { data, isLoading } = useMoralisQuery('NewUser', (q) =>
+	const [liked, setLiked] = useState<boolean>(false)
+	const [likeCount, setlikeCount] = useState<number>(0)
+	const [viewCount, setViewCount] = useState<number>(0)
+	const isRegistered = useCheckRegistered()
+	const { user } = useMoralis()
+	const { data, isLoading, isFetching } = useMoralisQuery('NewUser', (q) =>
 		q.equalTo('userName', props.userName).limit(1)
 	)
-	const profileQuery = useMoralisQuery('_User', (q) =>
-		q.equalTo('ethAddress', data[0]?.get("userAddress")).limit(1)
-	,[data])
+	const profileQuery = useMoralisQuery(
+		'_User',
+		(q) => q.equalTo('ethAddress', data[0]?.get('userAddress')).limit(1),
+		[data]
+	)
+
+	const currentUser = useMoralisQuery(
+		'NewUser',
+		(q) => q.equalTo('userAddress', user?.get('ethAddress')).limit(1),
+		[data]
+	)
+
+	const feedQuery = useMoralisQuery(
+		'NewGreet',
+		(q) => q.equalTo('uid', props.id),
+		[],
+		{
+			live: true,
+		}
+	)
+
+	// const isSelf = useMemo(
+	// 	() => user?.get('ethAddress') === data[0].get('userAddress'),
+	// 	[data, user]
+	// )
+
+	const isLiked = useCallback(() => {
+		if (data[0] && feedQuery.data[0] && user) {
+			let feedLike = feedQuery.data[0].relation('likes')
+			let query = feedLike
+				.query()
+				.equalTo('userAddress', user.get('ethAddress'))
+			query.first().then((res) => {
+				res ? setLiked(true) : setLiked(false)
+				console.log(res)
+			})
+		}
+	}, [data, feedQuery.data, user])
+
+	useEffect(() => {
+		isLiked()
+	}, [data,feedQuery.data, isLiked])
+
+	useEffect(() => {
+		if (feedQuery.data[0]) {
+			let feedLike = feedQuery.data[0].relation('likes')
+			feedLike
+				.query()
+				.count()
+				.then((c) => {
+					setlikeCount(c)
+				})
+			let feedView = feedQuery.data[0].relation('view')
+			feedView
+				.query()
+				.count()
+				.then((c) => {
+					setViewCount(c)
+				})
+		}
+	}, [feedQuery.data])
+
+	useEffect(()=>{
+		let addView = async ()=>{
+			let post = feedQuery.data[0]
+			currentUser.data[0] && post.relation('view').add(currentUser.data[0])
+			await post?.save()
+		}
+		addView()
+	},[])
 
 	//const [currentPosition, setCurrentPosition] = useState<number>(0)
 
@@ -103,6 +178,32 @@ const Feed = (props: Feed) => {
 		}
 	}
 
+	const handleLike = async () => {
+		if(!isRegistered){
+			hideNotification("registerError")
+			showNotification({
+				id:"registerError",
+				title: 'Error',
+				message: 'Register or log in to like post',
+				autoClose: 2500,
+				disallowClose: true,
+				color: 'red',
+				icon: <BiErrorCircle size='100%' />,
+			})
+			return
+		}
+		let post = feedQuery.data[0]
+		if(currentUser.data[0] && !liked){
+			post.relation('likes').add(currentUser.data[0])
+			await post.save()
+		}else{
+			post.relation('likes').remove(currentUser.data[0])
+			await post.save()
+		}
+		
+		
+	}
+
 	useEffect(() => {
 		if (width < 900) {
 			setMobile(true)
@@ -130,11 +231,16 @@ const Feed = (props: Feed) => {
 					<Group position='apart'>
 						<Link href={`/profile/${data[0]?.get('uid')}`} passHref>
 							<Group style={{ cursor: 'pointer' }}>
-								<Avatar radius='lg' color='dark' src={profileQuery.data[0]?.get("profilePic")?.url()}>
-									<CgProfile size={40} />
+								<Avatar
+									radius='lg'
+									color='dark'
+									size={50}
+									src={data[0]?.get('profile_pic')?.url()}
+								>
+									<CgProfile size={"100%"} />
 								</Avatar>
 								<div>
-									<Text weight={500}>{props.userName}</Text>
+									<Text color='white' weight={500}>{props.userName}</Text>
 									<Text
 										size='sm'
 										style={{ color: theme.colors.gray[6], lineHeight: 1.5 }}
@@ -242,8 +348,15 @@ const Feed = (props: Feed) => {
 								style={{ width: '100%' }}
 							>
 								<FeedButton
-									icon={<MdOutlineFavorite size={20} className='feedButton' />}
-									count={0}
+									icon={
+										<MdOutlineFavorite
+											size={20}
+											className='feedButton'
+											color={liked ? 'red' : 'none'}
+										/>
+									}
+									count={likeCount}
+									onClick={handleLike}
 								/>
 								<FeedButton
 									icon={<FaComment size={20} className='feedButton' />}
@@ -252,7 +365,7 @@ const Feed = (props: Feed) => {
 
 								<Group align='center'>
 									<FaEye size={20} className='feedButton' />
-									<Text size='sm'>0</Text>
+									<Text size='sm'>{viewCount}</Text>
 								</Group>
 							</Group>
 						</Group>

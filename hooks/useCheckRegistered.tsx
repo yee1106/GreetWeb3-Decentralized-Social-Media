@@ -1,3 +1,4 @@
+import { useMemo } from 'react'
 import { useMoralis, useMoralisQuery } from 'react-moralis'
 
 
@@ -10,5 +11,5 @@ export const useCheckRegistered = ():boolean=>{
 		(q) => q.equalTo('userAddress', user?.get('ethAddress')).limit(1),
 		[user?.get('ethAddress')]
 	)
-  return data[0] ? true : false
+  return useMemo(()=>(data[0] ? true : false),[data])
 }

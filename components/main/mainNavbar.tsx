@@ -54,7 +54,7 @@ const MainNavLink = ({ color, icon, href, text, textColor }: navLinkProps) => {
 
 const links = {
 	home: '/',
-	following: '/following',
+	//following: '/following',
 	explore: '/explore',
 }
 
@@ -72,7 +72,7 @@ export const MainNavbar = () => {
 				text='Home'
 				textColor={setActive(links.home)}
 			/>
-			<MainNavLink
+			{/* <MainNavLink
 				color={theme.colors.dark[5]}
 				href={links.following}
 				icon={
@@ -80,7 +80,7 @@ export const MainNavbar = () => {
 				}
 				text='Following'
 				textColor={setActive(links.following)}
-			/>
+			/> */}
 			<MainNavLink
 				color={theme.colors.dark[5]}
 				href={links.explore}

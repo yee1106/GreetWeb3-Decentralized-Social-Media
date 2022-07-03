@@ -34,10 +34,20 @@ const Explore = () => {
 			live: true,
 		}
 	)
-
+	// const { data, error, isLoading, isFetching, fetch } = useMoralisQuery(
+	// 	'NewUser',
+	// 	(q) =>
+	// 		Moralis.Query.or(
+	// 			q.matches('userName', new RegExp(`${debouncedText}`), 'i'),
+	// 			q.matches('userAddress', new RegExp(`${debouncedText}`,'i'))
+	// 		).limit(10),
+	// 	[debouncedText],
+		
+	// )
+	//Moralis.Query.or()
 
 	return (
-		<Page title='test' homePage={true}>
+		<>
 			<Link href='/' passHref>
 				<Button variant='outline'>Back</Button>
 			</Link>
@@ -68,17 +78,34 @@ const Explore = () => {
 						radius='lg'
 						mt='sm'
 					>
-						<Link href={`/profile/${d.get('uid')}`} passHref>
-							<Group position='left' align='center' style={{cursor:'pointer'}}>
-								<Avatar radius='lg' color='dark' mb='sm' size={40}>
+						<Link href={`/profile/${d?.get('uid')}`} passHref>
+							<Group
+								position='left'
+								align='center'
+								style={{ cursor: 'pointer' }}
+							>
+								<Avatar
+									radius='lg'
+									color='dark'
+									mb='sm'
+									size={40}
+									src={d?.get('profile_pic')?.url()}
+								>
 									<CgProfile size={'100%'} />
 								</Avatar>
-								<Title order={5}>{d.get('userName')}</Title>
+								<Group direction='column'>
+									<Title order={5} style={{ color: 'white' }}>
+										{d.get('userName')}
+									</Title>
+									<Text>
+										Address:<Text color='white'>{d?.get('userAddress')}</Text>
+									</Text>
+								</Group>
 							</Group>
 						</Link>
 					</Card>
 				))}
-		</Page>
+		</>
 	)
 }
 export default Explore

@@ -21,13 +21,8 @@ import FeedList from '@/components/feed/feedList'
 import { FeedFilter } from '@/utils/constants/constants'
 import axios from 'axios'
 import Moralis from 'moralis/types'
-import { useCyberConnect } from '@/hooks/useCyberConnect'
-import { ConnectionType } from '@cyberlab/cyberconnect'
-import { useQuery, gql } from '@apollo/client'
-import { UserIdentity, Connection, Query } from '@/graphql/cyberConnect'
 
 const Profile = () => {
-	//const theme = useMantineTheme()
 	const router = useRouter()
 	const { id } = router.query
 	const [greetCount, setGreetCount] = useState<number>(0)
@@ -41,10 +36,6 @@ const Profile = () => {
 	const [userByid, setUserById] = useState<
 		Moralis.Object<Moralis.Attributes> | undefined
 	>(undefined)
-	const [isFollowed, setIsFollowed] = useState<boolean>(false)
-	const [connection, setConnection] = useState<Connection[]>()
-	const [test, setTest] = useState<string>('')
-	const { account } = useChain()
 	const { data, isLoading } = useMoralisQuery(
 		'NewGreet',
 		(q) =>
@@ -58,51 +49,6 @@ const Profile = () => {
 	const profileQuery = useMoralisQuery('_User', (q) =>
 		q.equalTo('ethAddress', userByid?.get("userAddress")).limit(1)
 	,[userByid?.get("userAddress")])
-
-
-	useEffect(() => {
-		if (userByid?.get('userAddress')) {
-			axios
-				.post(
-					'https://api.stg.cybertino.io/connect/',
-					JSON.stringify({
-						query: `
-				query ProofQuery($from: String!, $to: String!) {
-					connections(fromAddr: $from, toAddrList: [$to], network: ETH) {
-						proof
-						followStatus {
-							isFollowed
-							isFollowing
-						}
-					}
-				}
-				`,
-						variables: {
-							from: user?.get('ethAddress') || account,
-							to: userByid?.get('userAddress'),
-						},
-					}),
-					{
-						method: 'POST',
-						headers: {
-							'Content-Type': 'application/json',
-						},
-					}
-				)
-				.then((res) => res.data)
-				.then((result: Connection[]) => {
-					setConnection(result)
-					setIsFollowed(result[0]?.followStatus.isFollowing)
-				})
-		}
-	}, [account, user, userByid])
-
-	const cyberConnect = useCyberConnect()
-
-
-	useEffect(() => {
-		console.log(connection)
-	}, [connection])
 
 
 	let getUserData = useCallback(async () => {
@@ -159,33 +105,21 @@ const Profile = () => {
 	},[profileQuery.data])
 
 	return (
-		<Page title={'Test'} homePage={true}>
+		<>
 			<Link href='/' passHref>
 				<Button variant='outline'>Back</Button>
 			</Link>
-			{connection !== undefined && userByid?.get("userAddress") && user?.get("ethAddress") && (
+			{userByid?.get("userAddress") && user?.get("ethAddress") && (
 				<ProfileCard
 					userName={userName}
-					image={profileQuery.data[0]?.get("profilePic")?.url()}
+					image={userByid?.get("profile_pic")?.url()}
 					greetCount={greetCount}
-					description={profileQuery.data[0]?.get("description")}
+					description={userByid?.get("description")}
 					likeCount={0}
 					self={self}
 					id={id}
 					from={user?.get("ethAddress")}
 					to={userByid.get("userAddress")}
-
-					followButtonHandle={async () => {
-						await cyberConnect?.connect(
-							userByid?.get('userAddress'),
-							ConnectionType.FOLLOW
-						)
-					}}
-					unfollowButtonHandle={async () => {
-						await cyberConnect?.disconnect(
-							userByid?.get('userAddress'),
-						)}
-					}
 				/>
 			)}
 			{data.length > 0 && (
@@ -198,9 +132,11 @@ const Profile = () => {
 					feeds={feeds ? feeds : []}
 					filter={FeedFilter.Trending}
 					isFollowing={true}
+					hasMore={false}
+					fetchMore={()=>{}}
 				/>
 			)}
-		</Page>
+		</>
 	)
 }
 

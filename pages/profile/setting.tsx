@@ -20,6 +20,7 @@ import { Dropzone, IMAGE_MIME_TYPE } from '@mantine/dropzone'
 import { BiImageAdd } from 'react-icons/bi'
 import { useState } from 'react'
 import { showNotification } from '@mantine/notifications'
+import { useRouter } from 'next/router'
 
 interface Preview {
 	image: string
@@ -28,6 +29,7 @@ interface Preview {
 
 const Setting = () => {
 	const theme = useMantineTheme()
+	const router = useRouter()
 	const {
 		Moralis,
 		user,
@@ -40,6 +42,7 @@ const Setting = () => {
 		image: '',
 		file: undefined,
 	})
+	const [loading,setLoading] = useState<boolean>(false)
 	const [description, setDescription] = useState<string>('')
 	const { data, error, isLoading, isFetching, fetch } = useMoralisQuery(
 		'NewUser',
@@ -51,7 +54,7 @@ const Setting = () => {
 	)
 
 	return (
-		<Page title={'test'} homePage={false}>
+		<>
 			<Link href='/' passHref>
 				<Button variant='outline'>Back</Button>
 			</Link>
@@ -77,14 +80,14 @@ const Setting = () => {
 							radius='lg'
 							color='dark'
 							mb='sm'
-							src={preview.image || user?.get('profilePic')?.url()}
+							src={preview.image || data[0]?.get('profile_pic')?.url()}
 							size={80}
 						>
 							<CgProfile size={'100%'} />
 						</Avatar>
 						<Title order={5}>{data[0]?.get('userName')}</Title>
 						<Text size='sm'>
-							{user?.get('description') || 'Default description'}
+							{data[0]?.get('description') || 'Default description'}
 						</Text>
 					</Group>
 				</Group>
@@ -94,7 +97,8 @@ const Setting = () => {
 						label='Set Description'
 						required
 						onChange={(e) => setDescription(e.target.value)}
-						defaultValue={user?.get('description') || 'Default description'}
+						//defaultValue={data[0]?.get('description') || 'Default description'}
+						disabled={loading}
 					/>
 				</Group>
 
@@ -127,16 +131,16 @@ const Setting = () => {
 				<Group position='center' mt='sm'>
 					<Button
 						variant='outline'
-						loading={isUserUpdating}
+						loading={loading}
 						onClick={async () => {
 							if (isInitialized) {
-								await setUserData({
-									description: description,
-								})
+								setLoading(true)
+								data[0]?.set("description",description)
+								await data[0]?.save()
 								if (preview.file !== undefined) {
 									let image = new Moralis.File(preview.file.name, preview.file)
-									user?.set('profilePic', image)
-									await user?.save()
+									data[0]?.set('profile_pic', image)
+									await data[0]?.save()
 								}
 								showNotification({
 									title: 'Success',
@@ -145,11 +149,12 @@ const Setting = () => {
 									disallowClose: true,
 									color: 'green',
 								})
-								refetchUserData()
+								//refetchUserData()
                 setPreview({
                   image:"",
                   file:undefined
                 })
+								setLoading(false)
 							}
 						}}
 					>
@@ -157,7 +162,7 @@ const Setting = () => {
 					</Button>
 				</Group>
 			</Card>
-		</Page>
+		</>
 	)
 }
 

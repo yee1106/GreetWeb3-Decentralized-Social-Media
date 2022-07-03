@@ -1,4 +1,4 @@
-// graphql.config.js
+//graphql.config.js
 module.exports = {
   projects: {
     app: {

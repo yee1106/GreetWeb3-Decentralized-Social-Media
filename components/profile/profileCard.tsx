@@ -1,5 +1,11 @@
 import Page from '@/components/main/Page'
-import { MouseEventHandler, ReactElement, useEffect, useState } from 'react'
+import {
+	MouseEventHandler,
+	ReactElement,
+	useEffect,
+	useMemo,
+	useState,
+} from 'react'
 import Link from 'next/link'
 import {
 	ActionIcon,
@@ -15,8 +21,10 @@ import {
 import { AiOutlineSetting } from 'react-icons/ai'
 import { CgProfile } from 'react-icons/cg'
 import { gql, useQuery } from '@apollo/client'
-import { Connection } from '@/graphql/cyberConnect'
+import { Connection, Query } from '@/graphql/cyberConnect'
 import axios from 'axios'
+import { useCyberConnect } from '@/hooks/useCyberConnect'
+import { ConnectionType } from '@cyberlab/cyberconnect'
 
 interface ProfileProps {
 	userName: string
@@ -26,156 +34,94 @@ interface ProfileProps {
 	likeCount: number
 	self: boolean
 	id: string | string[] | undefined
-	// isFollowed: boolean
-	followButtonHandle: MouseEventHandler<HTMLButtonElement>
-	unfollowButtonHandle: MouseEventHandler<HTMLButtonElement>
 	from: string
 	to: string
 }
 
 const ProfileCard = (props: ProfileProps) => {
 	const theme = useMantineTheme()
-	const [isFollowed, setIsFollowed] = useState<boolean>(false)
-	const [followingCount, setFollowingCount] = useState<number>(0)
-	const [followerCount, setFollowerCount] = useState<number>(0)
-
-	// const connectionQuery = useQuery<Connection[]>(
-	// 	gql`
-	// 		query ProofQuery($from: String!, $to: String!) {
-	// 			connections(fromAddr: $from, toAddrList: [$to], network: ETH) {
-	// 				proof
-	// 				followStatus {
-	// 					isFollowed
-	// 					isFollowing
-	// 				}
-	// 			}
-	// 		}
-	// 	`,
-	// 	// {
-	// 	// 	variables: {
-	// 	// 		from: user?.get('ethAddress') || account,
-	// 	// 		to: userByid?.get('userAddress'),
-	// 	// 	},
-	// 	// }
-	// 	{
-	// 		variables: {
-	// 			from: props.from,
-	// 			to: props.to,
-	// 		},
-	// 	}
-	// )
-
-	// useEffect(() => {
-	// 	if (connectionQuery.data && !connectionQuery.loading) {
-	// 		console.log(connectionQuery.data)
-	// 	}
-	// }, [connectionQuery.data, connectionQuery.loading])
-
-	useEffect(() => {
-		fetchFollowStatus()
-		fetchFollowingCount()
-		fetchFollowerCount()
-	}, [props.to])
-
-	const fetchFollowStatus = () => {
-		axios
-			.post(
-				'https://api.stg.cybertino.io/connect/',
-				JSON.stringify({
-					query: `
-				query ProofQuery($from: String!, $to: String!) {
-					connections(fromAddr: $from, toAddrList: [$to], network: ETH) {
-						namespace
-						proof
-						followStatus {
-							isFollowed
-							isFollowing
-						}
+	const [followLoading, setFollowLoading] = useState<boolean>(false)
+	const cyberConnect = useCyberConnect()
+	const connectionQuery = useQuery<Query>(
+		gql`
+			query ProofQuery($from: String!, $to: String!) {
+				connections(fromAddr: $from, toAddrList: [$to], network: ETH) {
+					followStatus {
+						isFollowed
+						isFollowing
 					}
 				}
-				`,
-					variables: {
-						from: props.from,
-						to: props.to,
-					},
-				}),
-				{
-					method: 'POST',
-					headers: {
-						'Content-Type': 'application/json',
-					},
+			}
+		`,
+		{
+			variables: {
+				from: props.from,
+				to: props.to,
+			},
+		}
+	)
+
+	const followQuery = useQuery<Query>(
+		gql`
+			query IdentityQuery($address: String!) {
+				identity(address: $address, network: ETH) {
+					followingCount
+					followerCount
 				}
-			)
-			.then((res) => res.data)
-			.then((result) => {
-				setIsFollowed(result.data.connections[0]?.followStatus.isFollowing)
-			})
-			.catch()
+			}
+		`,
+		{
+			variables: {
+				address: props.to,
+			},
+		}
+	)
+
+	let isFollowed = useMemo(
+		() => connectionQuery.data?.connections[0]?.followStatus?.isFollowing,
+		[connectionQuery]
+	)
+
+	const handleFollow = async () => {
+		setFollowLoading(true)
+		await cyberConnect?.connect(props.to, ConnectionType.FOLLOW)
+		await connectionQuery.refetch()
+		await followQuery.refetch()
+		setFollowLoading(false)
+	}
+	const handleUnfollow = async () => {
+		setFollowLoading(true)
+		await cyberConnect?.disconnect(props.to, ConnectionType.FOLLOW)
+		await connectionQuery.refetch()
+		await followQuery.refetch()
+		setFollowLoading(false)
 	}
 
-	const fetchFollowingCount = () => {
-		axios
-			.post(
-				'https://api.stg.cybertino.io/connect/',
-				JSON.stringify({
-					query: `
-					query IdentityQuery($address :String!){
-						identity(address: $address, network: ETH) {
-							followingCount
-						}
-					}
-				`,
-					variables: {
-						address: props.to,
-					},
-				}),
-				{
-					method: 'POST',
-					headers: {
-						'Content-Type': 'application/json',
-					},
-				}
-			)
-			.then((res) => res.data)
-			.then((result) => {
-				//setIsFollowed(result.data.connections[0]?.followStatus.isFollowing)
-				setFollowingCount(result.data.identity?.followingCount)
-				console.log(result.data.identity?.followingCount)
-			})
-			.catch()
-	}
-
-	const fetchFollowerCount = () => {
-		axios
-			.post(
-				'https://api.stg.cybertino.io/connect/',
-				JSON.stringify({
-					query: `
-					query IdentityQuery($address :String!){
-						identity(address: $address, network: ETH) {
-							followerCount
-						}
-					}
-				`,
-					variables: {
-						address: props.to,
-					},
-				}),
-				{
-					method: 'POST',
-					headers: {
-						'Content-Type': 'application/json',
-					},
-				}
-			)
-			.then((res) => res.data)
-			.then((result) => {
-				//setIsFollowed(result.data.connections[0]?.followStatus.isFollowing)
-				setFollowerCount(result.data.identity?.followerCount)
-				console.log(result.data.identity?.followerCount)
-			})
-			.catch()
-	}
+	let FollowButton = ({ followed }: { followed: boolean | undefined }) => (
+		<>
+			{!followed && followed !== undefined ? (
+				<Button
+					variant='outline'
+					onClick={handleFollow}
+					//disabled={isFollowed}
+					hidden={followed === undefined}
+					loading={followLoading}
+				>
+					Follow
+				</Button>
+			) : (
+				<Button
+					variant='outline'
+					onClick={handleUnfollow}
+					//disabled={isFollowed}
+					hidden={followed === undefined}
+					loading={followLoading}
+				>
+					Followed
+				</Button>
+			)}
+		</>
+	)
 
 	return (
 		<>
@@ -215,23 +161,9 @@ const ProfileCard = (props: ProfileProps) => {
 						</Avatar>
 						<Title order={5}>{props.userName}</Title>
 						{props.description && <Text size='sm'>{props.description}</Text>}
-						{!props.self && !isFollowed && (
-							<Button
-								variant='outline'
-								onClick={props.followButtonHandle}
-								//disabled={isFollowed}
-							>
-								Follow
-							</Button>
-						)}
-						{!props.self && isFollowed && (
-							<Button
-								variant='outline'
-								onClick={props.followButtonHandle}
-								//disabled={isFollowed}
-							>
-								Followed
-							</Button>
+
+						{!props.self && !connectionQuery.loading && (
+							<FollowButton followed={isFollowed} />
 						)}
 					</Group>
 				</Group>
@@ -247,7 +179,7 @@ const ProfileCard = (props: ProfileProps) => {
 					<Link href={`/profile/followers/${props.id}`} passHref>
 						<Box style={{ cursor: 'pointer' }}>
 							<Text size='sm' weight='bold' align='center'>
-								{followerCount}
+								{followQuery.data?.identity.followerCount || 0}
 							</Text>
 							<Text size='sm' align='center'>
 								Followers
@@ -258,21 +190,21 @@ const ProfileCard = (props: ProfileProps) => {
 					<Link href={`/profile/following/${props.id}`} passHref>
 						<Box style={{ cursor: 'pointer' }}>
 							<Text size='sm' weight='bold' align='center'>
-								{followingCount}
+								{followQuery.data?.identity.followingCount || 0}
 							</Text>
 							<Text size='sm' align='center'>
 								Following
 							</Text>
 						</Box>
 					</Link>
-					<Box>
+					{/* <Box>
 						<Text size='sm' weight='bold' align='center'>
 							{props.likeCount}
 						</Text>
 						<Text size='sm' align='center'>
 							Like
 						</Text>
-					</Box>
+					</Box> */}
 				</Group>
 			</Card>
 		</>

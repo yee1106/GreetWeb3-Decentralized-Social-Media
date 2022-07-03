@@ -73,6 +73,10 @@ declare module "hardhat/types/runtime" {
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.EIP712MetaTransaction__factory>;
     getContractFactory(
+      name: "Sign",
+      signerOrOptions?: ethers.Signer | FactoryOptions
+    ): Promise<Contracts.Sign__factory>;
+    getContractFactory(
       name: "Text",
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.Text__factory>;
@@ -156,6 +160,11 @@ declare module "hardhat/types/runtime" {
       address: string,
       signer?: ethers.Signer
     ): Promise<Contracts.EIP712MetaTransaction>;
+    getContractAt(
+      name: "Sign",
+      address: string,
+      signer?: ethers.Signer
+    ): Promise<Contracts.Sign>;
     getContractAt(
       name: "Text",
       address: string,

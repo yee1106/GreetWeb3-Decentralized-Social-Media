@@ -18,6 +18,8 @@ import { useRouter } from 'next/router'
 import ProfileCard from '@/components/profile/profileCard'
 import { useMoralis, useMoralisQuery } from 'react-moralis'
 import axios from 'axios'
+import { gql, useQuery } from '@apollo/client'
+import { Query } from '@/graphql/cyberConnect'
 
 const ProfileFollowers = () => {
 	const theme = useMantineTheme()
@@ -26,49 +28,40 @@ const ProfileFollowers = () => {
 	const { Moralis, isInitialized, user } = useMoralis()
 	const { data, isLoading } = useMoralisQuery(
 		'NewUser',
-		(q) => q.equalTo('uid', id),
+		(q) => q.equalTo('uid', id).limit(1),
 		[id]
 	)
-	
-
-	// useEffect(()=>{
-	// 	axios
-	// 			.post(
-	// 				'https://api.stg.cybertino.io/connect/',
-	// 				JSON.stringify({
-	// 					query: `
-	// 					query Following($address :String!){
-	// 						identity(address: $address, network: ETH) {
-	// 							followingCount
-	// 							followings{
-	// 								list{
-	// 									address
-	// 								}
-	// 							}
-	// 						}
-	// 					}
-	// 			`,
-	// 					variables: {
-	// 						address: data[0]?.get("userAddress")
-	// 					},
-	// 				}),
-	// 				{
-	// 					method: 'POST',
-	// 					headers: {
-	// 						'Content-Type': 'application/json',
-	// 					},
-	// 				}
-	// 			)
-	// 			.then((res) => res.data)
-	// 			.then((result: Connection[]) => {
-	// 				setConnection(result)
-	// 				setIsFollowed(result[0]?.followStatus.isFollowing)
-	// 			})
-	// },[])
-
+	const followers = useQuery<Query>(
+		gql`
+			query IdentityQuery($address: String!) {
+				identity(address: $address, network: ETH) {
+					followerCount
+					followers {
+						list {
+							address
+						}
+					}
+				}
+			}
+		`,
+		{
+			variables: {
+				address: data[0]?.get('userAddress'),
+			},
+		}
+	)
+	const followersQuery = useMoralisQuery(
+		'NewUser',
+		(q) =>
+			q.containedIn(
+				'userAddress',
+				followers.data?.identity.followers.list.map((d) => d.address) as any
+			),
+		[followers.data]
+	)
 
 	return (
-		<Page title={'Test'} homePage={true}>
+		<>
 			<Link href='/' passHref>
 				<Button variant='outline'>Back</Button>
 			</Link>
@@ -84,10 +77,48 @@ const ProfileFollowers = () => {
 					radius='lg'
 					mt='sm'
 				>
-					Followers of {data[0]?.get('userName')}
+					<Text mb='md'>Followers of {data[0]?.get('userName')}</Text>
+					{!followers.error &&
+						!followers.loading &&
+						followersQuery.data.map((d, i) => (
+							<Link href={`/profile/${d?.get('uid')}`} passHref key={i}>
+								<Group
+									position='left'
+									align='center'
+									px='md'
+									sx={{
+										cursor:"pointer",
+										"&:hover":{
+											backgroundColor:theme.colors.dark[7]
+										}
+									}}
+								>
+									<Avatar
+										radius='lg'
+										color='dark'
+										mb='sm'
+										size={40}
+										src={d?.get('profile_pic')?.url()}
+									>
+										<CgProfile size={'100%'} />
+									</Avatar>
+									<Box my='md'>
+										<Title order={5} style={{ color: 'white' }}>
+											{d?.get('userName')}
+										</Title>
+										<Box>
+											<Text size='sm'>Address:</Text>
+											<Text color='white' size='sm'>
+												{d?.get('userAddress')}
+											</Text>
+										</Box>
+									</Box>
+								</Group>
+							</Link>
+						))}
 				</Card>
 			)}
-		</Page>
+		</>
 	)
 }
 

@@ -9,12 +9,13 @@ export const useCyberConnect = (): CyberConnect | undefined => {
 		if (window.ethereum && typeof window !== undefined) {
 			let cyberconnect = new CyberConnect({
 				namespace: 'CyberConnect',
-				env: Env.STAGING,
+				env: Env.PRODUCTION,
 				chain: Blockchain.ETH,
 				provider: window.ethereum,
 				signingMessageEntity: 'Greet',
 			})
-			setCb(cyberconnect) 
+			setCb(cyberconnect)
+			console.log(cyberconnect)
 		}
 	}, [])
 

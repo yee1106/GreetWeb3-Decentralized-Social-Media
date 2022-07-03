@@ -36,10 +36,10 @@
 			console.log("logged in user:", user);
 		}
 
-    function arrTest(){
-      let arr = ["test",1]
-      console.log(arr)
-    }
+		function arrTest() {
+			let arr = ["test", 1]
+			console.log(arr)
+		}
 
 		// LOG OUT
 		async function logOut() {
@@ -59,9 +59,8 @@
 		async function getObject() {
 			let obj = Moralis.Object.extend("Object")
 			let q = new Moralis.Query(obj)
-			q.equalTo("name", "obj2")
 			console.log(q)
-			let result = await q.find()
+			let result = await q.first()
 			console.log(result)
 		}
 
@@ -93,6 +92,46 @@
 			console.log(result.data)
 		}
 
+		async function addRelation() {
+			let obj = Moralis.Object.extend("Object")
+			let q = new Moralis.Query(obj)
+			const user = await Moralis.User.current();
+			let u = Moralis.Object.extend("NewUser")
+			let uq = new Moralis.Query(u)
+			uq.equalTo("userAddress", user.get("ethAddress"))
+			let result = await q.first()
+			let foundUser = await uq.first()
+			alert(foundUser.get("userAddress"))
+			await result.relation("likes").add(foundUser);
+			await result.save()
+			alert("Liked")
+		}
+
+		async function addRelation2() {
+			let obj = Moralis.Object.extend("Object")
+			let q = new Moralis.Query(obj)
+			let u = Moralis.Object.extend("NewUser")
+			let uq = new Moralis.Query(u)
+			uq.equalTo("userAddress", "0x7fbcfc788e5f7637f63e9193c2f04036a93776d8")
+			let foundUser = await uq.first()
+			let result = await q.first()
+			await result.relation("likes").add(foundUser);
+			await result.save()
+			alert("Liked")
+		}
+
+		async function getRelation() {
+			let obj = Moralis.Object.extend("Object")
+			let q = new Moralis.Query(obj)
+			let result = await q.first()
+			let relation = result?.relation("likes")
+			//const query = relation.query();
+			let r = relation?.query().equalTo("uid", "5")
+			console.log(await r.first())
+		}
+
+
+
 		let test = async () => {
 			let address = "0x11Ba960a711e15a7847d309c62782791f295C8E1"
 
@@ -116,7 +155,7 @@
 				"type": "function"
 			}]
 
-			
+
 			let body = {
 				abi: abi,
 				params: {
@@ -128,12 +167,12 @@
 			let URL =
 				'https://deep-index.moralis.io/api/v2/0x48eedeC866fFAeb7FC5E6375FbcFDe2b8FB16308/function?chain=mumbai&function_name=getUserPublicDetailsByAddress'
 
-			let data = await fetch(URL,{
+			let data = await fetch(URL, {
 				url: URL,
 				followRedirect: true,
 				headers: {
 					'accept': "application/json",
-          'X-API-Key': 'Vdp1Tjb3SADQhfVlzd8yF5Ol6NFzLgQ6iKXZcccQ8PpNZqD7pGDBvG3bDvIkHcfO',
+					'X-API-Key': 'Vdp1Tjb3SADQhfVlzd8yF5Ol6NFzLgQ6iKXZcccQ8PpNZqD7pGDBvG3bDvIkHcfO',
 					'Content-type': "application/json"
 				},
 				body: JSON.stringify(body),
@@ -144,7 +183,9 @@
 
 		}
 
-    //'X-API-Key': 'Vdp1Tjb3SADQhfVlzd8yF5Ol6NFzLgQ6iKXZcccQ8PpNZqD7pGDBvG3bDvIkHcfO',
+
+
+		//'X-API-Key': 'Vdp1Tjb3SADQhfVlzd8yF5Ol6NFzLgQ6iKXZcccQ8PpNZqD7pGDBvG3bDvIkHcfO',
 
 
 

@@ -40,6 +40,8 @@ import GreetUserAbi from '@/artifacts/contracts/GreetUser.sol/GreetUser.json'
 import config from '@/utils/config.json'
 import { BiErrorCircle } from 'react-icons/bi'
 import { useCyberConnect } from '@/hooks/useCyberConnect'
+import useMetaTransaction from '@/hooks/useMetaTransaction'
+import Register from './register'
 
 interface pageProps {
 	title: string
@@ -50,7 +52,6 @@ interface pageProps {
 const Page = observer(({ title, children, homePage }: pageProps) => {
 	const theme = useMantineTheme()
 	const { width } = useViewportSize()
-	const [cb, setCb] = useState<CyberConnect>()
 	const router = useRouter()
 	const {
 		Moralis,
@@ -69,7 +70,7 @@ const Page = observer(({ title, children, homePage }: pageProps) => {
 	const [registerError, setRegisterError] = useState<boolean>(false)
 	const [registerErrorMsg, setRegisterErrorMsg] = useState<string>('')
 	const [opened, setOpened] = useState<boolean>(false)
-	const cyberConnect = useCyberConnect()
+	const [txHash, setTxHash] = useState<string>("") 
 	const { switchNetwork, chainId, chain, account } = useChain()
 	const { data, error, isLoading, isFetching, fetch } = useMoralisQuery(
 		'NewUser',
@@ -79,11 +80,35 @@ const Page = observer(({ title, children, homePage }: pageProps) => {
 			live: true,
 		}
 	)
+	const users = useMoralisQuery(
+		'_User',
+		(q) => q.equalTo("ethAddress","0x48952e9b47dfd212f94e436175feddd311048ded").limit(10),
+		[],
+		{
+			live: true,
+		}
+	)
+	const gaslessTransaction = useMetaTransaction<GreetUser>('', GreetUserAbi.abi)
 
 	let userContract: GreetUser
 
+	let nonHomePagePath = [
+		'/newGreet',
+		'/profile/setting',
+	]
+
+	// async function getRelation() {
+	// 	let obj = Moralis.Object.extend("Object")
+	// 	let q = new Moralis.Query(obj)
+	// 	let result = await q.first()
+	// 	let relation = result?.relation("likes")
+	// 	//const query = relation.query();
+	// 	let r  = relation?.query().equalTo("uid","5")
+	// 	console.log(r)
+	// }
+
 	const handleRegister = async () => {
-		function containsWhitespace(str:string) {
+		function containsWhitespace(str: string) {
 			return /\s/.test(str)
 		}
 		setRegistering(true)
@@ -91,7 +116,7 @@ const Page = observer(({ title, children, homePage }: pageProps) => {
 			setRegisterError(true)
 			setRegisterErrorMsg("User name can't contain whitespace")
 			return
-		}else if(userName===""){
+		} else if (userName === '') {
 			setRegisterError(true)
 			setRegisterErrorMsg("User name can't be empty")
 			return
@@ -117,7 +142,60 @@ const Page = observer(({ title, children, homePage }: pageProps) => {
 			await tx.wait()
 			setRegisterError(false)
 			setRegistering(false)
-			router.push("/")
+			router.push('/')
+		} catch (error) {
+			setRegistering(false)
+			setRegisterError(true)
+			setRegisterErrorMsg(error.message)
+			if (error.data.message) {
+				setRegisterErrorMsg(error.data.message)
+			}
+		}
+	}
+	const handleRegister2 = async () => {
+		function containsWhitespace(str: string) {
+			return /\s/.test(str)
+		}
+		setRegistering(true)
+		if (containsWhitespace(userName)) {
+			setRegisterError(true)
+			setRegisterErrorMsg("User name can't contain whitespace")
+			return
+		} else if (userName === '') {
+			setRegisterError(true)
+			setRegisterErrorMsg("User name can't be empty")
+			return
+		}
+		try {
+			// userContract = new web3Library.Contract(
+			// 	config.contractAddress.User,
+			// 	GreetUserAbi.abi,
+			// 	web3?.getSigner()
+			// ) as GreetUser
+
+			// //Estimate the gas price
+			// let gasPrice = await web3?.getGasPrice()
+			// let estimateGas = web3Library.utils.hexlify(
+			// 	gasPrice?.mul(120).div(100) || 0
+			// )
+
+			//Register the user
+			if (gaslessTransaction.ready && gaslessTransaction.contract && account) {
+				let registerFunctionData =
+					await gaslessTransaction.contract?.populateTransaction.registerNewUser(
+						userName
+					)
+				
+				let response =await gaslessTransaction.sendMetaTransaction(
+					registerFunctionData,
+					account
+				)
+				await gaslessTransaction.waitTransaction(response)
+				let res = await web3?.waitForTransaction(response,1)
+				setRegisterError(false)
+				setRegistering(false)
+				router.push('/')
+			}
 		} catch (error) {
 			setRegistering(false)
 			setRegisterError(true)
@@ -128,39 +206,13 @@ const Page = observer(({ title, children, homePage }: pageProps) => {
 		}
 	}
 
-	// useEffect(() => {
-	// 	if (typeof window !== undefined) {
-	// 		let cyberconnect = new CyberConnect({
-	// 			namespace: 'CyberConnect',
-	// 			env: Env.STAGING,
-	// 			chain: Blockchain.ETH,
-	// 			provider: window.ethereum,
-	// 			signingMessageEntity: 'Greet',
-	// 		})
-	// 		setCb(cyberconnect)
-	// 	}
-	// 	if (typeof window.ethereum === undefined) {
-	// 		alert('Please install Metamask to continue')
-	// 	}
-	// }, [])
 
 	useEffect(() => {
-		console.log(cyberConnect)
-	}, [cyberConnect])
-	
-	
-	useEffect(() => {
-		console.log(data[0]?.get('uid'))
-	}, [data])
-
-	useEffect(() => {
+		//alert(chainId)
 		if (isAuthenticated && !isWeb3Enabled && !isWeb3EnableLoading) {
 			enableWeb3()
-			// if (chainId != Moralis.Chains.POLYGON_MUMBAI) {
-			// 	switchNetwork(Moralis.Chains.POLYGON_MUMBAI)
-			// }
 		}
-		if (isWeb3Enabled && chainId != Moralis.Chains.POLYGON_MUMBAI) {
+		if (isWeb3Enabled && chainId != Moralis.Chains.POLYGON_MUMBAI && chainId != '0x539') {
 			hideNotification('switch')
 			showNotification({
 				id: 'switch',
@@ -173,16 +225,10 @@ const Page = observer(({ title, children, homePage }: pageProps) => {
 			})
 			switchNetwork(Moralis.Chains.POLYGON_MUMBAI)
 		}
-
-		
-		// if (chainId != Moralis.Chains.POLYGON_MUMBAI) {
-		// 	switchNetwork(Moralis.Chains.POLYGON_MUMBAI)
-		// }
+		//console.log(chainId)
 	}, [
 		isAuthenticated,
 		isWeb3Enabled,
-		chain,
-		homePage,
 		enableWeb3,
 		switchNetwork,
 		isWeb3EnableLoading,
@@ -190,8 +236,8 @@ const Page = observer(({ title, children, homePage }: pageProps) => {
 		Moralis.Chains.POLYGON_MUMBAI,
 	])
 
-	const login = () => {
-		authenticate({
+	const login = async () => {
+		await authenticate({
 			provider: 'metamask',
 			chainId: 80001,
 			signingMessage:
@@ -205,7 +251,7 @@ const Page = observer(({ title, children, homePage }: pageProps) => {
 			background: theme.black,
 			//background: opened ? theme.black : theme.white,
 			height: '100%',
-			display: homePage ? 'block' : 'none',
+			display: !(nonHomePagePath.includes(router.pathname)) ? 'block' : 'none',
 			// display:'flex',
 			// flexDirection: 'row',
 			// justifyContent:'center'
@@ -244,7 +290,7 @@ const Page = observer(({ title, children, homePage }: pageProps) => {
 				asideOffsetBreakpoint='sm'
 				fixed
 				navbar={
-					width >= theme.breakpoints.sm ? (
+					width >= theme.breakpoints.sm  ? (
 						<Navbar
 							p='md'
 							hiddenBreakpoint='sm'
@@ -267,9 +313,11 @@ const Page = observer(({ title, children, homePage }: pageProps) => {
 							style={{
 								background: theme.black,
 								height: '100%',
+								display: (nonHomePagePath.includes(router.pathname)) || width <= theme.breakpoints.sm ? 'none' : 'block',
 								//display: !homePage ? 'none' : 'block',
 							}}
 							mt='lg'
+							hidden={nonHomePagePath.includes(router.pathname) || width <= theme.breakpoints.sm}
 						>
 							<Group
 								position='center'
@@ -282,7 +330,7 @@ const Page = observer(({ title, children, homePage }: pageProps) => {
 									p='md'
 								>
 									<Group position='center'>
-										<Text size='sm'>Following suggestion</Text>
+										{/* <Text size='sm'>Following suggestion</Text> */}
 									</Group>
 								</Box>
 							</Group>
@@ -359,7 +407,10 @@ const Page = observer(({ title, children, homePage }: pageProps) => {
 													
 												</UnstyledButton> */}
 														<Group style={{ cursor: 'pointer' }}>
-															<Avatar src={''} size='md'>
+															<Avatar
+																src={data[0]?.get('profile_pic')?.url()}
+																size='md'
+															>
 																<CgProfile size='100%' />
 															</Avatar>
 															<Box>
@@ -430,9 +481,10 @@ const Page = observer(({ title, children, homePage }: pageProps) => {
 												color='indigo'
 												size='md'
 												mr='sm'
-												onClick={()=>{
-													router.push("/")
+												onClick={() => {
+													router.push('/')
 													logout()
+													location.reload()
 												}}
 											>
 												<Text size='md'>Disconnect</Text>
@@ -445,10 +497,11 @@ const Page = observer(({ title, children, homePage }: pageProps) => {
 					</>
 				}
 				footer={
-					data[0] && <MobileNavBar profileId={data[0].get('uid')} image={''} />
+					data[0] && <MobileNavBar profileId={data[0].get('uid')} image={data[0].get("profile_pic")?.url()} />
 				}
 			>
 				{children}
+				
 			</AppShell>
 		</>
 	)

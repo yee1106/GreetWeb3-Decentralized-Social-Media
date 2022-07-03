@@ -18,6 +18,7 @@ import Biconomy from '@biconomy/mexa'
 import CyberConnect, { Env, Blockchain } from '@cyberlab/cyberconnect'
 import restoreScrollPosition from 'next-restore-scroll'
 import { ApolloClient, InMemoryCache, ApolloProvider } from '@apollo/client'
+import Page from "@/components/main/Page"
 // import "swiper/swiper-bundle.min.css";
 // import "swiper/swiper.min.css";
 
@@ -26,11 +27,15 @@ const App = ({ Component, pageProps, router }: AppProps) => {
 	const toggleColorScheme = (value?: ColorScheme) =>
 		setColorScheme(value || (colorScheme === 'dark' ? 'light' : 'dark'))
 
-	let serverUrl = process.env.NEXT_PUBLIC_MORALIS_SERVER_URL || ''
-	let appId = process.env.NEXT_PUBLIC_MORALIS_APP_ID || ''
+	let serverUrl =
+		process.env.NEXT_PUBLIC_MORALIS_SERVER_URL ||
+		'https://tlu6sh5vgvs3.usemoralis.com:2053/server'
+	let appId =
+		process.env.NEXT_PUBLIC_MORALIS_APP_ID ||
+		'VoCRaSpW4HrrBhA85LvrrfwEN5ymD8pYJ793KbCW'
 	const client = new ApolloClient({
-		uri: 'https://api.stg.cybertino.io/connect/',
-		cache: new InMemoryCache()
+		uri: 'https://api.cybertino.io/connect/',
+		cache: new InMemoryCache(),
 	})
 	//let biconomy = new Biconomy()
 	//restoreScrollPosition(router, '#scroll')
@@ -48,7 +53,7 @@ const App = ({ Component, pageProps, router }: AppProps) => {
 	)
 
 	return (
-		<MoralisProvider serverUrl={serverUrl} appId={appId} dangerouslyUseOfMasterKey={"iVT6r4HY1yAwWa2UA4MjJ1fmj4Fts1xMtCmYZG4k"}>
+		<MoralisProvider serverUrl={serverUrl} appId={appId}>
 			<ApolloProvider client={client}>
 				<ColorSchemeProvider
 					colorScheme={colorScheme}
@@ -66,7 +71,9 @@ const App = ({ Component, pageProps, router }: AppProps) => {
 							<ModalsProvider>
 								<GlobalStyle />
 								<Meta />
-								<Component {...pageProps} />
+								<Page title='test' homePage={true}>
+									<Component {...pageProps} />
+								</Page>
 							</ModalsProvider>
 						</NotificationsProvider>
 					</MantineProvider>
