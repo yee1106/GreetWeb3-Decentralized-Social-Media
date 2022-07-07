@@ -1,15 +1,17 @@
+import KeyValueStore from './../store/keyValueStore';
 import { useEffect } from 'react'
 import Router, { NextRouter } from 'next/router'
 
 function saveScrollPos(asPath: string) {
-	sessionStorage.setItem(
+	KeyValueStore.setItem(
 		`scrollPos:${asPath}`,
 		JSON.stringify({ x: window.scrollX, y: window.scrollY })
 	)
+
 }
 
 function restoreScrollPos(asPath: string) {
-	const json = sessionStorage.getItem(`scrollPos:${asPath}`)
+	const json = KeyValueStore.getItem(`scrollPos:${asPath}`)
 	const scrollPos = json ? JSON.parse(json) : undefined
 	if (scrollPos) {
 		window.scrollTo(scrollPos.x, scrollPos.y)

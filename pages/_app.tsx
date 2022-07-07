@@ -1,3 +1,6 @@
+/* eslint react/no-children-prop: 0 */
+/* eslint react/jsx-key: 0 */
+
 import type { AppProps } from 'next/app'
 import { ThemeProvider } from 'next-themes'
 import Meta from '@/components/meta'
@@ -18,7 +21,8 @@ import Biconomy from '@biconomy/mexa'
 import CyberConnect, { Env, Blockchain } from '@cyberlab/cyberconnect'
 import restoreScrollPosition from 'next-restore-scroll'
 import { ApolloClient, InMemoryCache, ApolloProvider } from '@apollo/client'
-import Page from "@/components/main/Page"
+import Page from '@/components/main/Page'
+import { Pipeline, Pipe } from 'react-pipeline-component'
 // import "swiper/swiper-bundle.min.css";
 // import "swiper/swiper.min.css";
 
@@ -53,34 +57,39 @@ const App = ({ Component, pageProps, router }: AppProps) => {
 	)
 
 	return (
-		<MoralisProvider serverUrl={serverUrl} appId={appId}>
-			<ApolloProvider client={client}>
-				<ColorSchemeProvider
-					colorScheme={colorScheme}
-					toggleColorScheme={toggleColorScheme}
-				>
-					<MantineProvider
-						theme={{
-							colorScheme,
-							breakpoints: {
-								xxl: 1600,
-							},
-						}}
+		<>
+			<MoralisProvider serverUrl={serverUrl} appId={appId}>
+				<ApolloProvider client={client}>
+					<ColorSchemeProvider
+						colorScheme={colorScheme}
+						toggleColorScheme={toggleColorScheme}
 					>
-						<NotificationsProvider position='bottom-right'>
-							<ModalsProvider>
-								<GlobalStyle />
-								<Meta />
-								<Page title='test' homePage={true}>
-									<Component {...pageProps} />
-								</Page>
-							</ModalsProvider>
-						</NotificationsProvider>
-					</MantineProvider>
-				</ColorSchemeProvider>
-			</ApolloProvider>
-		</MoralisProvider>
+						<MantineProvider
+							theme={{
+								colorScheme,
+								breakpoints: {
+									xxl: 1600,
+								},
+							}}
+							withNormalizeCSS
+							withGlobalStyles
+						>
+							<NotificationsProvider position='bottom-right'>
+								<ModalsProvider>
+									<Meta />
+									<GlobalStyle />
+									<Page title='test' homePage={true}>
+										<Component {...pageProps} />
+									</Page>
+								</ModalsProvider>
+							</NotificationsProvider>
+						</MantineProvider>
+					</ColorSchemeProvider>
+				</ApolloProvider>
+			</MoralisProvider>
+		</>
 	)
+	
 }
 
 export default App

@@ -32,7 +32,7 @@ import MainNavbar from '@/components/main/mainNavbar'
 import MobileNavBar from './mobileNavBar'
 import CyberConnect, { Env, Blockchain } from '@cyberlab/cyberconnect'
 import { observer } from 'mobx-react-lite'
-import userStore from '@/store/user'
+import userStore from '@/store/store'
 import { useRouter } from 'next/router'
 import { useChain, useMoralis, useMoralisQuery } from 'react-moralis'
 import { Greet, GreetUser } from '@/typechain-types'
@@ -400,7 +400,7 @@ const Page = observer(({ title, children, homePage }: pageProps) => {
 														<Bell size={'100%'} />
 													</ActionIcon>
 													<Link
-														href={`/profile/${data[0].get('uid')}`}
+														href={{pathname:"profile",query:{id:`${data[0].get('uid')}`}}}
 														passHref
 													>
 														{/* <UnstyledButton mr='sm'>

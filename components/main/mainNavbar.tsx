@@ -31,7 +31,7 @@ const MainNavLink = ({ color, icon, href, text, textColor }: navLinkProps) => {
 	let router = useRouter()
 
 	return (
-		<Link href={href} passHref>
+		<Link href={href} passHref scroll={false}>
 			<UnstyledButton
 				sx={{
 					width: '100%',

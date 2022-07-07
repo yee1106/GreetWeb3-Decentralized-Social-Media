@@ -3,6 +3,7 @@ import { Home, Compass, Plus, Bell } from 'tabler-icons-react'
 import { CgProfile } from 'react-icons/cg'
 import Link from 'next/link'
 import { useRouter } from 'next/router'
+import { UrlObject } from 'url'
 
 interface MobileNavBarProps {
 	profileId: string
@@ -19,7 +20,7 @@ const MobileNavBar = ({ profileId, image }: MobileNavBarProps) => {
 					<NavItem link={links.add} icon={<Plus size='100%' />} />
 					<NavItem link={links.notification} icon={<Bell size='100%' />} />
 					<NavItem
-						link={`${links.profile}/${profileId}`}
+						link={`${links.profile}?id=${profileId}`}
 						icon={
 							<Avatar src={image} size='sm'>
 								<CgProfile size='100%' />
@@ -33,7 +34,7 @@ const MobileNavBar = ({ profileId, image }: MobileNavBarProps) => {
 }
 
 interface NavItemprops {
-	link: string
+	link: string | UrlObject
 	icon: React.ReactElement
 }
 

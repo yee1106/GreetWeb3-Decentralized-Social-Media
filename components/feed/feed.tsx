@@ -75,11 +75,6 @@ const Feed = (props: Feed) => {
 	const { data, isLoading, isFetching } = useMoralisQuery('NewUser', (q) =>
 		q.equalTo('userName', props.userName).limit(1)
 	)
-	const profileQuery = useMoralisQuery(
-		'_User',
-		(q) => q.equalTo('ethAddress', data[0]?.get('userAddress')).limit(1),
-		[data]
-	)
 
 	const currentUser = useMoralisQuery(
 		'NewUser',
@@ -96,10 +91,6 @@ const Feed = (props: Feed) => {
 		}
 	)
 
-	// const isSelf = useMemo(
-	// 	() => user?.get('ethAddress') === data[0].get('userAddress'),
-	// 	[data, user]
-	// )
 
 	const isLiked = useCallback(() => {
 		if (data[0] && feedQuery.data[0] && user) {
@@ -192,6 +183,7 @@ const Feed = (props: Feed) => {
 			})
 			return
 		}
+		setLiked(true)
 		let post = feedQuery.data[0]
 		if(currentUser.data[0] && !liked){
 			post.relation('likes').add(currentUser.data[0])
@@ -229,7 +221,7 @@ const Feed = (props: Feed) => {
 					}}
 				>
 					<Group position='apart'>
-						<Link href={`/profile/${data[0]?.get('uid')}`} passHref>
+						<Link href={{pathname:"profile",query:{id:data[0]?.get('uid')}}} passHref>
 							<Group style={{ cursor: 'pointer' }}>
 								<Avatar
 									radius='lg'
@@ -341,7 +333,7 @@ const Feed = (props: Feed) => {
 					<Box>
 						<Group position='center'>
 							<Group
-								position='apart'
+								position='left'
 								mx='xs'
 								px='lg'
 								mt='lg'
@@ -358,10 +350,10 @@ const Feed = (props: Feed) => {
 									count={likeCount}
 									onClick={handleLike}
 								/>
-								<FeedButton
+								{/* <FeedButton
 									icon={<FaComment size={20} className='feedButton' />}
 									count={0}
-								/>
+								/> */}
 
 								<Group align='center'>
 									<FaEye size={20} className='feedButton' />

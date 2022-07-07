@@ -3,7 +3,7 @@ import FeedList from '@/components/feed/feedList'
 import Page from '@/components/main/Page'
 import { useDidUpdate, useViewportSize, useWindowScroll } from '@mantine/hooks'
 import { observer } from 'mobx-react-lite'
-import store from '@/store/user'
+import store from '@/store/store'
 import { Button, ScrollArea, SegmentedControl, Box, Tabs } from '@mantine/core'
 import { useRouter } from 'next/router'
 import { FeedFilter } from '@/utils/constants/constants'
@@ -12,13 +12,16 @@ import { useMoralis, useMoralisQuery } from 'react-moralis'
 import axios, { AxiosResponse } from 'axios'
 import { useScrollRestoration } from '@/hooks/useScrollRestoration'
 import { useCheckRegistered } from '@/hooks/useCheckRegistered'
+import { useScrollRestore } from '@/hooks/useScrollRestore'
 
 //import { heights } from '@mantine/core/lib/components/Badge/Badge.styles'
 
 const Index = () => {
 	const router = useRouter()
 
+	//useScrollRestore(router)
 	useScrollRestoration(router)
+	// const [scroll, scrollTo] = useWindowScroll()
 	const [feeds, setFeeds] = useState<Feed[]>()
 
 	const { Moralis, isInitialized } = useMoralis()
@@ -27,15 +30,13 @@ const Index = () => {
 
 	const [objectid, setObjectId] = useState<string>('')
 
-	// const isRegistered = useCheckRegistered()
-
 	const pageSize = 10
 
 	const { data } = useMoralisQuery(
 		'NewGreet',
 		(q) =>
 			q.descending('timestamp_decimal').notEqualTo('uri', '').limit(pageSize),
-		[],
+		[]
 	)
 
 	const feed = useMoralisQuery('NewGreet', (q) =>
@@ -68,9 +69,9 @@ const Index = () => {
 	useEffect(() => {
 		console.log(data)
 		fetchAllMetaData()
-		return(()=>{
+		return () => {
 			setFeeds([])
-		})
+		}
 	}, [data, fetchAllMetaData])
 
 	// let fetchGreetMetaData = async ()=>{
@@ -81,7 +82,11 @@ const Index = () => {
 	// useDidUpdate(()=>{
 	// 	isRegistered ? alert("registered") : alert("Not registered")
 	// },[isRegistered])
-
+	// useEffect(()=>{
+	// 	console.log(window.history.scrollRestoration)
+	// 	window.history.scrollRestoration = 'auto'
+	// },[])
+	
 	
 
 	const images: string[] = ['https://picsum.photos/id/1018/1000/600/']
@@ -106,7 +111,7 @@ const Index = () => {
 	return (
 		<>
 			<FeedList
-				feeds={feeds || []}
+				feeds={testfeeds || []}
 				filter={FeedFilter.Trending}
 				isFollowing={false}
 				hasMore={false}

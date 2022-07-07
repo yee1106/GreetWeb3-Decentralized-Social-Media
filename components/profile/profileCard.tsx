@@ -176,7 +176,7 @@ const ProfileCard = (props: ProfileProps) => {
 							Greets
 						</Text>
 					</Box>
-					<Link href={`/profile/followers/${props.id}`} passHref>
+					<Link href={`/profile/followers?id=${props.id}`} passHref>
 						<Box style={{ cursor: 'pointer' }}>
 							<Text size='sm' weight='bold' align='center'>
 								{followQuery.data?.identity.followerCount || 0}
@@ -187,7 +187,7 @@ const ProfileCard = (props: ProfileProps) => {
 						</Box>
 					</Link>
 
-					<Link href={`/profile/following/${props.id}`} passHref>
+					<Link href={`/profile/following?id=${props.id}`} passHref>
 						<Box style={{ cursor: 'pointer' }}>
 							<Text size='sm' weight='bold' align='center'>
 								{followQuery.data?.identity.followingCount || 0}
