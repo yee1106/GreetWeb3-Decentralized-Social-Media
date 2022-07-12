@@ -81,7 +81,7 @@ const ProfileFollowers = () => {
 					{!followers.error &&
 						!followers.loading &&
 						followersQuery.data.map((d, i) => (
-							<Link href={{pathname:"profile",query:{id:`${d.get('uid')}`}}} passHref key={i}>
+							<Link href={{pathname:"/profile",query:{id:`${d.get('uid')}`}}} passHref key={i}>
 								<Group
 									position='left'
 									align='center'

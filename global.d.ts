@@ -23,6 +23,7 @@ declare global {
 		creatorName: string
 		creatorAddress: string
 		images?: MediaURI[]
+		videos?:MediaURI
 		text: string
 	}
 	const Moralis: MoralisDef

@@ -74,7 +74,7 @@ const App = ({ Component, pageProps, router }: AppProps) => {
 							withNormalizeCSS
 							withGlobalStyles
 						>
-							<NotificationsProvider position='bottom-right'>
+							<NotificationsProvider position='top-center'>
 								<ModalsProvider>
 									<Meta />
 									<GlobalStyle />

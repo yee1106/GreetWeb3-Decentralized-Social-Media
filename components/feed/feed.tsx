@@ -238,18 +238,7 @@ const Feed = (props: Feed) => {
 										style={{ color: theme.colors.gray[6], lineHeight: 1.5 }}
 									>
 										{/* {props.timestamp} */}
-										{moment(parseInt(props.timestamp) * 1000).format(
-											'Do MMMM YYYY'
-										)}
-									</Text>
-									<Text
-										size='sm'
-										style={{ color: theme.colors.gray[6], lineHeight: 1.5 }}
-									>
-										{/* {props.timestamp} */}
-										{moment(parseInt(props.timestamp) * 1000).format(
-											'h:mm:ss a'
-										)}
+										{moment(parseInt(props.timestamp) * 1000).fromNow()}
 									</Text>
 								</div>
 							</Group>
@@ -369,7 +358,7 @@ const Feed = (props: Feed) => {
 				onClose={() => setMobileMenuOpened(false)}
 				position='bottom'
 				size='md'
-				title={'Greet Menu'}
+				title={<Text p='md'>Greet Menu</Text>}
 			>
 				{/* <UnstyledButton style={{width: "100%"}}>
 					<Group align='center'>
@@ -382,7 +371,7 @@ const Feed = (props: Feed) => {
 						<Text size='sm'>Verify this Greet</Text>
 				</Group> */}
 				<Group position='center' style={{ width: '100%' }}>
-					<a href={verifyLink} target='_blank' rel='noreferrer'>
+					<a href={verifyLink} target='_blank' rel='noreferrer' style={{width:"100%"}}>
 						<UnstyledButton
 							sx={{
 								width: '100%',
@@ -392,7 +381,7 @@ const Feed = (props: Feed) => {
 							}}
 							p='md'
 						>
-							<Group position='left'>
+							<Group position='center'>
 								<AiOutlineCheckCircle />
 								<Text size='sm'>Verify this Greet</Text>
 							</Group>

@@ -1,17 +1,16 @@
-import KeyValueStore from './../store/keyValueStore';
+import KeyValueStore from './../store/keyValueStore'
 import { useEffect } from 'react'
 import Router, { NextRouter } from 'next/router'
 
 function saveScrollPos(asPath: string) {
-	KeyValueStore.setItem(
+	sessionStorage.setItem(
 		`scrollPos:${asPath}`,
 		JSON.stringify({ x: window.scrollX, y: window.scrollY })
 	)
-
 }
 
 function restoreScrollPos(asPath: string) {
-	const json = KeyValueStore.getItem(`scrollPos:${asPath}`)
+	const json = sessionStorage.getItem(`scrollPos:${asPath}`)
 	const scrollPos = json ? JSON.parse(json) : undefined
 	if (scrollPos) {
 		window.scrollTo(scrollPos.x, scrollPos.y)
@@ -60,4 +59,16 @@ export function useScrollRestoration(router: NextRouter) {
 			Router.beforePopState(() => true)
 		}
 	}, [router])
+
+	//remove the position before reload
+	useEffect(() => {
+		window.onbeforeunload = function () {
+			sessionStorage.removeItem(`scrollPos:${router.asPath}`)
+		}
+
+		return () => {
+			window.onbeforeunload = null
+			process.env.NODE_ENV
+		}
+	}, [])
 }

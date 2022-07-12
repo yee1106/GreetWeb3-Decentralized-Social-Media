@@ -73,7 +73,6 @@ const Index = () => {
 			setFeeds([])
 		}
 	}, [data, fetchAllMetaData])
-
 	// let fetchGreetMetaData = async ()=>{
 	// 	let {data} = await axios.get("https://storageapi.fleek.co/47853140-618b-400c-89ef-dcc3f3fabfdb-bucket/metadata/YC1106_1650381559529.json")
 	// 	console.log(data);
@@ -84,7 +83,7 @@ const Index = () => {
 	// },[isRegistered])
 	// useEffect(()=>{
 	// 	console.log(window.history.scrollRestoration)
-	// 	window.history.scrollRestoration = 'auto'
+	// 	window.history.scrollResoration = 'auto'
 	// },[])
 	
 	
