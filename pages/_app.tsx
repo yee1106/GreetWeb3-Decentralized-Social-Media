@@ -2,9 +2,7 @@
 /* eslint react/jsx-key: 0 */
 
 import type { AppProps } from 'next/app'
-import { ThemeProvider } from 'next-themes'
 import Meta from '@/components/meta'
-//import { store } from '@/store/store'
 import {
 	MantineProvider,
 	Global,
@@ -13,21 +11,21 @@ import {
 } from '@mantine/core'
 import { ModalsProvider } from '@mantine/modals'
 import { NotificationsProvider } from '@mantine/notifications'
-import { observer } from 'mobx-react-lite'
 import '@/styles/globals.css'
-import { createContext, useContext, useEffect, useState } from 'react'
 import { MoralisProvider } from 'react-moralis'
-import Biconomy from '@biconomy/mexa'
-import CyberConnect, { Env, Blockchain } from '@cyberlab/cyberconnect'
-import restoreScrollPosition from 'next-restore-scroll'
 import { ApolloClient, InMemoryCache, ApolloProvider } from '@apollo/client'
 import Page from '@/components/main/Page'
-import { Pipeline, Pipe } from 'react-pipeline-component'
+import { useColorScheme, useLocalStorage } from '@mantine/hooks'
 // import "swiper/swiper-bundle.min.css";
 // import "swiper/swiper.min.css";
 
 const App = ({ Component, pageProps, router }: AppProps) => {
-	const [colorScheme, setColorScheme] = useState<ColorScheme>('dark')
+	const preferredColorScheme = useColorScheme();
+	const [colorScheme, setColorScheme] = useLocalStorage<ColorScheme>({
+    key: 'mantine-color-scheme',
+    defaultValue: preferredColorScheme,
+    getInitialValueInEffect: true,
+  });
 	const toggleColorScheme = (value?: ColorScheme) =>
 		setColorScheme(value || (colorScheme === 'dark' ? 'light' : 'dark'))
 
@@ -41,20 +39,6 @@ const App = ({ Component, pageProps, router }: AppProps) => {
 		uri: 'https://api.cybertino.io/connect/',
 		cache: new InMemoryCache(),
 	})
-	//let biconomy = new Biconomy()
-	//restoreScrollPosition(router, '#scroll')
-
-	let GlobalStyle = () => (
-		<Global
-			styles={(theme) => ({
-				body: {
-					color: theme.colorScheme === 'dark' ? theme.white : theme.black,
-					fontFamily:
-						'-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Helvetica,Arial,sans-serif,Apple Color Emoji,Segoe UI Emoji',
-				},
-			})}
-		/>
-	)
 
 	return (
 		<>
@@ -91,5 +75,30 @@ const App = ({ Component, pageProps, router }: AppProps) => {
 	)
 	
 }
+
+let GlobalStyle = () => (
+	<Global
+		styles={(theme) => ({
+			body: {
+				//color: theme.colorScheme === 'dark' ? theme.white : theme.black,
+				fontFamily:
+					'-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Helvetica,Arial,sans-serif,Apple Color Emoji,Segoe UI Emoji',
+			},
+			"::-webkit-scrollbar":{
+				width:"10px"
+			},
+			"::-webkit-scrollbar-track":{
+				backgroundColor: theme.colorScheme === 'dark' ? theme.black : theme.white
+			},
+			"::-webkit-scrollbar-thumb":{
+				background: "rgb(136,136,136)",
+				borderRadius: "10px"
+			},
+			"::-webkit-scrollbar-thumb:hover":{
+				background: "rgb(85,85,85)"
+			}
+		})}
+	/>
+)
 
 export default App

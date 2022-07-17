@@ -1,4 +1,12 @@
-import { MediaQuery, Footer, Group, ActionIcon, Avatar } from '@mantine/core'
+import {
+	MediaQuery,
+	Footer,
+	Group,
+	ActionIcon,
+	Avatar,
+	Indicator,
+	useMantineTheme,
+} from '@mantine/core'
 import { Home, Compass, Plus, Bell } from 'tabler-icons-react'
 import { CgProfile } from 'react-icons/cg'
 import Link from 'next/link'
@@ -11,14 +19,37 @@ interface MobileNavBarProps {
 }
 
 const MobileNavBar = ({ profileId, image }: MobileNavBarProps) => {
+	const theme = useMantineTheme()
+	const router = useRouter()
+	let setActive = (route: string) =>
+		router.pathname === route
+			? theme.colors.indigo[7]
+			: theme.colorScheme === 'dark'
+			? theme.colors.dark[0]
+			: theme.black
 	return (
 		<MediaQuery largerThan='sm' styles={{ display: 'none' }}>
-			<Footer height={55} p='md' style={{ backgroundColor: '#000000' }}>
+			<Footer
+				height={55}
+				p='md'
+				sx={(theme) => ({
+					backgroundColor:
+						theme.colorScheme === 'dark' ? theme.black : theme.white,
+				})}
+			>
 				<Group position='apart' style={{ width: '100%' }}>
-					<NavItem link={links.home} icon={<Home size='100%' />} />
-					<NavItem link={links.explore} icon={<Compass size='100%' />} />
+					<NavItem link={links.home} icon={<Home size='100%' color={setActive(links.home)} />} />
+					<NavItem link={links.explore} icon={<Compass size='100%' color={setActive(links.explore)}/>} />
 					<NavItem link={links.add} icon={<Plus size='100%' />} />
-					<NavItem link={links.notification} icon={<Bell size='100%' />} />
+					<Indicator
+						disabled={false}
+						offset={5}
+						size={16}
+						label={0}
+						color='red'
+					>
+						<NavItem link={links.notification} icon={<Bell size='100%' color={setActive(links.notification)} />} />
+					</Indicator>
 					<NavItem
 						link={`${links.profile}?id=${profileId}`}
 						icon={

@@ -1,10 +1,15 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import {
+	MouseEventHandler,
+	useCallback,
+	useEffect,
+	useMemo,
+	useState,
+} from 'react'
 import {
 	Box,
 	Card,
 	Button,
 	Group,
-	Image,
 	Text,
 	AspectRatio,
 	useMantineTheme,
@@ -14,6 +19,12 @@ import {
 	Divider,
 	Drawer,
 	Spoiler,
+	ScrollArea,
+	useMantineColorScheme,
+	Indicator,
+	Center,
+	Loader,
+	Image,
 } from '@mantine/core'
 import {
 	useMediaQuery,
@@ -40,6 +51,8 @@ import config from '@/utils/config.json'
 import { useCheckRegistered } from '@/hooks/useCheckRegistered'
 import { hideNotification, showNotification } from '@mantine/notifications'
 import { BiImageAdd, BiErrorCircle } from 'react-icons/bi'
+import CommentInput from './comment/commentInput'
+import CommentSection from './comment/commentSection'
 //import fleekStorage from '@fleekhq/fleek-storage-js'
 
 // interface feed {
@@ -91,7 +104,6 @@ const Feed = (props: Feed) => {
 		}
 	)
 
-
 	const isLiked = useCallback(() => {
 		if (data[0] && feedQuery.data[0] && user) {
 			let feedLike = feedQuery.data[0].relation('likes')
@@ -100,14 +112,14 @@ const Feed = (props: Feed) => {
 				.equalTo('userAddress', user.get('ethAddress'))
 			query.first().then((res) => {
 				res ? setLiked(true) : setLiked(false)
-				console.log(res)
+				//console.log(res)
 			})
 		}
 	}, [data, feedQuery.data, user])
 
 	useEffect(() => {
 		isLiked()
-	}, [data,feedQuery.data, isLiked])
+	}, [data, feedQuery.data, isLiked])
 
 	useEffect(() => {
 		if (feedQuery.data[0]) {
@@ -128,14 +140,14 @@ const Feed = (props: Feed) => {
 		}
 	}, [feedQuery.data])
 
-	useEffect(()=>{
-		let addView = async ()=>{
+	useEffect(() => {
+		let addView = async () => {
 			let post = feedQuery.data[0]
 			currentUser.data[0] && post.relation('view').add(currentUser.data[0])
 			await post?.save()
 		}
 		addView()
-	},[])
+	}, [])
 
 	//const [currentPosition, setCurrentPosition] = useState<number>(0)
 
@@ -148,7 +160,8 @@ const Feed = (props: Feed) => {
 				onClick={props.onClick}
 				sx={{
 					':hover': {
-						color: theme.white,
+						color:
+							theme.colorScheme === 'dark' ? theme.white : theme.colors.dark[3],
 					},
 				}}
 			>
@@ -170,10 +183,10 @@ const Feed = (props: Feed) => {
 	}
 
 	const handleLike = async () => {
-		if(!isRegistered){
-			hideNotification("registerError")
+		if (!isRegistered) {
+			hideNotification('registerError')
 			showNotification({
-				id:"registerError",
+				id: 'registerError',
 				title: 'Error',
 				message: 'Register or log in to like post',
 				autoClose: 2500,
@@ -185,15 +198,13 @@ const Feed = (props: Feed) => {
 		}
 		setLiked(true)
 		let post = feedQuery.data[0]
-		if(currentUser.data[0] && !liked){
-			post.relation('likes').add(currentUser.data[0])
+		if (currentUser.data[0] && !liked) {
+			post.relation('likes')?.add(currentUser.data[0])
 			await post.save()
-		}else{
-			post.relation('likes').remove(currentUser.data[0])
+		} else {
+			post.relation('likes')?.remove(currentUser.data[0])
 			await post.save()
 		}
-		
-		
 	}
 
 	useEffect(() => {
@@ -215,24 +226,38 @@ const Feed = (props: Feed) => {
 				<Card
 					p='lg'
 					style={{
-						backgroundColor: theme.colors.dark[9],
+						backgroundColor:
+							theme.colorScheme === 'dark' ? theme.colors.dark[9] : theme.white,
 						border: '1px solid',
 						borderColor: theme.colors.gray[7],
 					}}
+					radius='md'
 				>
 					<Group position='apart'>
-						<Link href={{pathname:"profile",query:{id:data[0]?.get('uid')}}} passHref>
+						<Link
+							href={{ pathname: 'profile', query: { id: data[0]?.get('uid') } }}
+							passHref
+						>
 							<Group style={{ cursor: 'pointer' }}>
-								<Avatar
-									radius='lg'
-									color='dark'
-									size={50}
-									src={data[0]?.get('profile_pic')?.url()}
+								<Indicator
+									position='top-end'
+									size={10}
+									color='green'
+									style={{ zIndex: '0' }}
+									disabled={true}
 								>
-									<CgProfile size={"100%"} />
-								</Avatar>
-								<div>
-									<Text color='white' weight={500}>{props.userName}</Text>
+									<Avatar
+										radius='lg'
+										color='dark'
+										size={40}
+										src={data[0]?.get('profile_pic')?.url()}
+										//imageProps={<Image src={data[0]?.get('profile_pic')?.url()} alt='' placeholder='blur'/>}
+									>
+										<CgProfile size={'100%'} />
+									</Avatar>
+								</Indicator>
+								<Box>
+									<Text weight={500} >{props.userName}</Text>
 									<Text
 										size='sm'
 										style={{ color: theme.colors.gray[6], lineHeight: 1.5 }}
@@ -240,7 +265,7 @@ const Feed = (props: Feed) => {
 										{/* {props.timestamp} */}
 										{moment(parseInt(props.timestamp) * 1000).fromNow()}
 									</Text>
-								</div>
+								</Box>
 							</Group>
 						</Link>
 						<Group>
@@ -272,7 +297,7 @@ const Feed = (props: Feed) => {
 					</Group>
 					<Box my='sm'>
 						<Spoiler maxHeight={120} hideLabel={'Hide'} showLabel={'Show more'}>
-							<Text color='white' size='sm' style={{ whiteSpace: 'pre-line' }}>
+							<Text size='sm' style={{ whiteSpace: 'pre-line' }}>
 								{props.textContent}
 							</Text>
 						</Spoiler>
@@ -288,6 +313,18 @@ const Feed = (props: Feed) => {
 								showPlayButton={false}
 								showFullscreenButton={false}
 								showNav={width > theme.breakpoints.sm}
+								renderItem={(item) => (
+									<Image
+										src={item.original}
+										alt=''
+										withPlaceholder={true}
+										placeholder={
+											<Center>
+												<Loader variant='bars' color='indigo' />
+											</Center>
+										}
+									/>
+								)}
 								renderLeftNav={(onClick, disabled) => (
 									<UnstyledButton
 										type='button'
@@ -319,77 +356,91 @@ const Feed = (props: Feed) => {
 							/>
 						)}
 					</Card.Section>
-					<Box>
-						<Group position='center'>
-							<Group
-								position='left'
-								mx='xs'
-								px='lg'
-								mt='lg'
-								style={{ width: '100%' }}
-							>
-								<FeedButton
-									icon={
-										<MdOutlineFavorite
-											size={20}
-											className='feedButton'
-											color={liked ? 'red' : 'none'}
-										/>
-									}
-									count={likeCount}
-									onClick={handleLike}
-								/>
-								{/* <FeedButton
-									icon={<FaComment size={20} className='feedButton' />}
-									count={0}
-								/> */}
+					<Box mr='sm'>
+						<Group position='right' mt='lg' style={{ width: '100%' }}>
+							<FeedButton
+								icon={
+									<MdOutlineFavorite
+										size={20}
+										className='feedButton'
+										color={liked ? 'red' : 'none'}
+									/>
+								}
+								count={likeCount}
+								onClick={handleLike}
+							/>
+							<FeedButton
+								icon={<FaComment size={20} className='feedButton' />}
+								count={0}
+							/>
 
-								<Group align='center'>
-									<FaEye size={20} className='feedButton' />
-									<Text size='sm'>{viewCount}</Text>
-								</Group>
+							<Group align='center'>
+								<FaEye size={20} className='feedButton' />
+								<Text size='sm'>{viewCount}</Text>
 							</Group>
 						</Group>
 					</Box>
+					<CommentSection/>
 				</Card>
 			</Box>
 			<Drawer
 				opened={mobileMenuOpened}
 				onClose={() => setMobileMenuOpened(false)}
 				position='bottom'
-				size='md'
+				size='lg'
 				title={<Text p='md'>Greet Menu</Text>}
 			>
-				{/* <UnstyledButton style={{width: "100%"}}>
-					<Group align='center'>
-						<CircleCheck/>
-						<Text size='sm'>Verify this Greet</Text>
-					</Group>
-				</UnstyledButton>
-        <Group align='center' style={{width:'100%'}}>
-						<CircleCheck/>
-						<Text size='sm'>Verify this Greet</Text>
-				</Group> */}
-				<Group position='center' style={{ width: '100%' }}>
-					<a href={verifyLink} target='_blank' rel='noreferrer' style={{width:"100%"}}>
-						<UnstyledButton
-							sx={{
-								width: '100%',
-								'&:hover': {
-									backgroundColor: theme.colors.dark[5],
-								},
-							}}
-							p='md'
+				<ScrollArea
+					type='auto'
+					style={{ height: 300 }}
+					scrollbarSize={5}
+					mx='sm'
+				>
+					<Group position='center' style={{ width: '100%' }}>
+						<a
+							href={verifyLink}
+							target='_blank'
+							rel='noreferrer'
+							style={{ width: '100%' }}
 						>
-							<Group position='center'>
-								<AiOutlineCheckCircle />
-								<Text size='sm'>Verify this Greet</Text>
-							</Group>
-						</UnstyledButton>
-					</a>
-				</Group>
+							<DrawerButton
+								text='Verify this Greet'
+								icon={<AiOutlineCheckCircle />}
+							/>
+						</a>
+					</Group>
+				</ScrollArea>
 			</Drawer>
 		</Group>
+	)
+}
+
+const DrawerButton = ({
+	text,
+	icon,
+}: {
+	icon?: React.ReactNode
+	text: string
+	onClick?: MouseEventHandler<HTMLButtonElement> | undefined
+}) => {
+	return (
+		<UnstyledButton
+			sx={(theme) => ({
+				width: '100%',
+				'&:hover': {
+					backgroundColor:
+						theme.colorScheme === 'dark'
+							? theme.colors.dark[5]
+							: theme.colors.gray[0],
+				},
+			})}
+			p='md'
+		>
+			<Group position='center'>
+				{icon}
+				<Text size='sm'>{text}</Text>
+			</Group>
+		</UnstyledButton>
 	)
 }
 

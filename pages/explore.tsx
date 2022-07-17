@@ -48,9 +48,6 @@ const Explore = () => {
 
 	return (
 		<>
-			<Link href='/' passHref>
-				<Button variant='outline'>Back</Button>
-			</Link>
 			<Box mt='sm'>
 				<TextInput
 					placeholder='search by user name'
@@ -71,7 +68,7 @@ const Explore = () => {
 						p='lg'
 						key={i}
 						style={{
-							backgroundColor: theme.colors.dark[9],
+							backgroundColor: theme.colorScheme === 'dark'? theme.colors.dark[9] : theme.white,
 							border: '1px solid',
 							borderColor: theme.colors.gray[7],
 						}}
@@ -86,7 +83,7 @@ const Explore = () => {
 							>
 								<Avatar
 									radius='lg'
-									color='dark'
+									color={theme.colorScheme === 'dark' ? 'dark' : 'gray'}
 									mb='sm'
 									size={40}
 									src={d?.get('profile_pic')?.url()}
@@ -94,11 +91,11 @@ const Explore = () => {
 									<CgProfile size={'100%'} />
 								</Avatar>
 								<Group direction='column'>
-									<Title order={5} style={{ color: 'white' }}>
+									<Title order={5}>
 										{d.get('userName')}
 									</Title>
 									<Text>
-										Address:<Text color='white'>{d?.get('userAddress')}</Text>
+										Address:<Text>{d?.get('userAddress')}</Text>
 									</Text>
 								</Group>
 							</Group>

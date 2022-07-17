@@ -5,7 +5,7 @@ const Notifications = ()=> {
 	
 	return(
 		<>
-			Explore
+			Notification
 		</>
 	)
 }

@@ -1,9 +1,18 @@
 import { useEffect } from 'react'
 import Feed from '@/components/feed/feed'
-import { Box, SegmentedControl, ScrollArea } from '@mantine/core'
+import {
+	Box,
+	SegmentedControl,
+	ScrollArea,
+	Text,
+	Group,
+	Center,
+	Skeleton,
+	Loader,
+} from '@mantine/core'
 import { observer } from 'mobx-react-lite'
 import userStore from '@/store/store'
-import { useWindowScroll } from '@mantine/hooks'
+import { useViewportSize, useWindowScroll } from '@mantine/hooks'
 import { FeedFilter } from '@/utils/constants/constants'
 import InfiniteScroll from 'react-infinite-scroll-component'
 
@@ -16,15 +25,19 @@ interface feedListProps {
 }
 
 const FeedList = (props: feedListProps) => {
+	const { width } = useViewportSize()
 	return (
 		<>
 			<Box>
 				<InfiniteScroll
-					dataLength={FeedList.length}
+					dataLength={props.feeds.length}
 					next={props.fetchMore}
 					hasMore={props.hasMore}
-					loader={<h3 style={{ color: 'black' }}> Loading...</h3>}
-					endMessage={<h4 style={{ color: 'black' }}>Nothing more to show</h4>}
+					loader={
+						<Center>
+							<Loader variant='bars' color='indigo' />
+						</Center>
+					}
 				>
 					{props.feeds.map((f) => (
 						<Feed

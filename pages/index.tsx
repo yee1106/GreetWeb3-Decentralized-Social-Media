@@ -4,7 +4,7 @@ import Page from '@/components/main/Page'
 import { useDidUpdate, useViewportSize, useWindowScroll } from '@mantine/hooks'
 import { observer } from 'mobx-react-lite'
 import store from '@/store/store'
-import { Button, ScrollArea, SegmentedControl, Box, Tabs } from '@mantine/core'
+import { Button, ScrollArea, SegmentedControl, Box, Tabs, Text } from '@mantine/core'
 import { useRouter } from 'next/router'
 import { FeedFilter } from '@/utils/constants/constants'
 import SwipeView from 'react-swipeable-views'
@@ -13,82 +13,18 @@ import axios, { AxiosResponse } from 'axios'
 import { useScrollRestoration } from '@/hooks/useScrollRestoration'
 import { useCheckRegistered } from '@/hooks/useCheckRegistered'
 import { useScrollRestore } from '@/hooks/useScrollRestore'
+import { usePost, usePostV2 } from '@/hooks/usePost'
+
 
 //import { heights } from '@mantine/core/lib/components/Badge/Badge.styles'
 
 const Index = () => {
+
 	const router = useRouter()
-
-	//useScrollRestore(router)
+	let {feed : post,fetchMore,hasMore} = usePostV2()
 	useScrollRestoration(router)
-	// const [scroll, scrollTo] = useWindowScroll()
-	const [feeds, setFeeds] = useState<Feed[]>()
 
-	const { Moralis, isInitialized } = useMoralis()
-
-	const [page, setPage] = useState<number>(1)
-
-	const [objectid, setObjectId] = useState<string>('')
-
-	const pageSize = 10
-
-	const { data } = useMoralisQuery(
-		'NewGreet',
-		(q) =>
-			q.descending('timestamp_decimal').notEqualTo('uri', '').limit(pageSize),
-		[]
-	)
-
-	const feed = useMoralisQuery('NewGreet', (q) =>
-		q
-			.descending('timestamp_decimal')
-			.notEqualTo('uri', '')
-			.greaterThan('objectid', objectid)
-			.limit(pageSize)
-	)
-
-	const fetchAllMetaData = useCallback(async () => {
-		let allData = await Promise.all(
-			data.map((d) => {
-				return axios.get<GreetMetaData>(d.get('uri'))
-			})
-		)
-		let id = data.map((d) => d.get('uid') as string)
-		let timestamp = data.map((d) => d.get('timestamp') as string)
-
-		let formattedData: Feed[] = allData.map(({ data }, i) => ({
-			userName: data.creatorName,
-			id: id[i],
-			images: data.images?.map((i) => i.URI),
-			textContent: data.text,
-			timestamp: timestamp[i],
-		}))
-		setFeeds(formattedData)
-	}, [data])
-
-	useEffect(() => {
-		console.log(data)
-		fetchAllMetaData()
-		return () => {
-			setFeeds([])
-		}
-	}, [data, fetchAllMetaData])
-	// let fetchGreetMetaData = async ()=>{
-	// 	let {data} = await axios.get("https://storageapi.fleek.co/47853140-618b-400c-89ef-dcc3f3fabfdb-bucket/metadata/YC1106_1650381559529.json")
-	// 	console.log(data);
-	// }
-
-	// useDidUpdate(()=>{
-	// 	isRegistered ? alert("registered") : alert("Not registered")
-	// },[isRegistered])
-	// useEffect(()=>{
-	// 	console.log(window.history.scrollRestoration)
-	// 	window.history.scrollResoration = 'auto'
-	// },[])
-	
-	
-
-	const images: string[] = ['https://picsum.photos/id/1018/1000/600/']
+	const images = ['https://picsum.photos/id/1018/1000/600/']
 
 	let testfeeds: Feed[] = [
 		{
@@ -110,11 +46,11 @@ const Index = () => {
 	return (
 		<>
 			<FeedList
-				feeds={testfeeds || []}
+				feeds={post}
 				filter={FeedFilter.Trending}
 				isFollowing={false}
-				hasMore={false}
-				fetchMore={() => {}}
+				hasMore={hasMore}
+				fetchMore={fetchMore}
 			/>
 		</>
 	)

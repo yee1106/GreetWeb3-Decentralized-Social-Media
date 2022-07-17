@@ -3,7 +3,6 @@ import {
 	AppShell,
 	Navbar,
 	Header,
-	Aside,
 	Text,
 	MediaQuery,
 	useMantineTheme,
@@ -17,6 +16,11 @@ import {
 	Modal,
 	TextInput,
 	Loader,
+	useMantineColorScheme,
+	Indicator,
+	createStyles,
+	Tooltip,
+	FloatingTooltip,
 } from '@mantine/core'
 import {
 	hideNotification,
@@ -38,10 +42,13 @@ import { useChain, useMoralis, useMoralisQuery } from 'react-moralis'
 import { Greet, GreetUser } from '@/typechain-types'
 import GreetUserAbi from '@/artifacts/contracts/GreetUser.sol/GreetUser.json'
 import config from '@/utils/config.json'
-import { BiErrorCircle } from 'react-icons/bi'
+import { BiErrorCircle, BiMoon } from 'react-icons/bi'
+import { BsMoon, BsSun } from 'react-icons/bs'
 import { useCyberConnect } from '@/hooks/useCyberConnect'
 import useMetaTransaction from '@/hooks/useMetaTransaction'
+import { nonHomePagePath } from '@/utils/constants/constants'
 import Register from './register'
+import Aside from './aside'
 
 interface pageProps {
 	title: string
@@ -70,7 +77,7 @@ const Page = observer(({ title, children, homePage }: pageProps) => {
 	const [registerError, setRegisterError] = useState<boolean>(false)
 	const [registerErrorMsg, setRegisterErrorMsg] = useState<string>('')
 	const [opened, setOpened] = useState<boolean>(false)
-	const [txHash, setTxHash] = useState<string>("") 
+	const [txHash, setTxHash] = useState<string>('')
 	const { switchNetwork, chainId, chain, account } = useChain()
 	const { data, error, isLoading, isFetching, fetch } = useMoralisQuery(
 		'NewUser',
@@ -80,32 +87,13 @@ const Page = observer(({ title, children, homePage }: pageProps) => {
 			live: true,
 		}
 	)
-	const users = useMoralisQuery(
-		'_User',
-		(q) => q.equalTo("ethAddress","0x48952e9b47dfd212f94e436175feddd311048ded").limit(10),
-		[],
-		{
-			live: true,
-		}
-	)
+	const { toggleColorScheme } = useMantineColorScheme()
+	const { classes } = useStyles()
 	const gaslessTransaction = useMetaTransaction<GreetUser>('', GreetUserAbi.abi)
 
 	let userContract: GreetUser
 
-	let nonHomePagePath = [
-		'/newGreet',
-		'/profile/setting',
-	]
-
-	// async function getRelation() {
-	// 	let obj = Moralis.Object.extend("Object")
-	// 	let q = new Moralis.Query(obj)
-	// 	let result = await q.first()
-	// 	let relation = result?.relation("likes")
-	// 	//const query = relation.query();
-	// 	let r  = relation?.query().equalTo("uid","5")
-	// 	console.log(r)
-	// }
+	//let nonHomePagePath = ['/newGreet', '/profile/setting']
 
 	const handleRegister = async () => {
 		function containsWhitespace(str: string) {
@@ -185,13 +173,13 @@ const Page = observer(({ title, children, homePage }: pageProps) => {
 					await gaslessTransaction.contract?.populateTransaction.registerNewUser(
 						userName
 					)
-				
-				let response =await gaslessTransaction.sendMetaTransaction(
+
+				let response = await gaslessTransaction.sendMetaTransaction(
 					registerFunctionData,
 					account
 				)
 				await gaslessTransaction.waitTransaction(response)
-				let res = await web3?.waitForTransaction(response,1)
+				let res = await web3?.waitForTransaction(response, 1)
 				setRegisterError(false)
 				setRegistering(false)
 				router.push('/')
@@ -206,13 +194,16 @@ const Page = observer(({ title, children, homePage }: pageProps) => {
 		}
 	}
 
-
 	useEffect(() => {
 		//alert(chainId)
 		if (isAuthenticated && !isWeb3Enabled && !isWeb3EnableLoading) {
 			enableWeb3()
 		}
-		if (isWeb3Enabled && chainId != Moralis.Chains.POLYGON_MUMBAI && chainId != '0x539') {
+		if (
+			isWeb3Enabled &&
+			chainId != Moralis.Chains.POLYGON_MUMBAI &&
+			chainId != '0x539'
+		) {
 			hideNotification('switch')
 			showNotification({
 				id: 'switch',
@@ -226,15 +217,7 @@ const Page = observer(({ title, children, homePage }: pageProps) => {
 			switchNetwork(Moralis.Chains.POLYGON_MUMBAI)
 		}
 		//console.log(chainId)
-	}, [
-		isAuthenticated,
-		isWeb3Enabled,
-		enableWeb3,
-		switchNetwork,
-		isWeb3EnableLoading,
-		chainId,
-		Moralis.Chains.POLYGON_MUMBAI,
-	])
+	}, [isAuthenticated, isWeb3Enabled, isWeb3EnableLoading, chainId])
 
 	const login = async () => {
 		await authenticate({
@@ -245,105 +228,26 @@ const Page = observer(({ title, children, homePage }: pageProps) => {
 		})
 	}
 
-	let styles: Record<string, CSSProperties> = {
-		navbar: {
-			border: 'none',
-			background: theme.black,
-			//background: opened ? theme.black : theme.white,
-			height: '100%',
-			display: !(nonHomePagePath.includes(router.pathname)) ? 'block' : 'none',
-			// display:'flex',
-			// flexDirection: 'row',
-			// justifyContent:'center'
-		},
-		header: {},
-		innerHeader: {
-			borderBottom: '5px dashed',
-			background: theme.black,
-			borderImage:
-				'linear-gradient(to right, #364fc7 0%, #3b5bdb 25%, #1c7eed 75%, #15aabf 100% )',
-			borderImageSlice: 1,
-			margin: 0,
-			height: '70px',
-		},
-		secondHeader: {
-			backgroundColor: theme.black,
-			height: '50px',
-			//width: "100%"
-		},
-		mobileUpperNavbarNormal: {
-			fontSize: '',
-		},
-		footer: {},
-	}
-
 	return (
 		<>
 			<AppShell
 				styles={{
 					main: {
 						background:
-							theme.colorScheme === 'dark' ? theme.black : theme.colors.gray[0],
+							theme.colorScheme === 'dark' ? theme.black : theme.white,
 					},
 				}}
 				navbarOffsetBreakpoint='sm'
 				asideOffsetBreakpoint='sm'
 				fixed
-				navbar={
-					width >= theme.breakpoints.sm  ? (
-						<Navbar
-							p='md'
-							hiddenBreakpoint='sm'
-							width={{ sm: 150, lg: 300, md: 150, xl: 300, xxl: 500 }}
-							style={styles.navbar}
-							mt='lg'
-						>
-							<MainNavbar />
-						</Navbar>
-					) : (
-						<></>
-					)
-				}
-				aside={
-					<MediaQuery smallerThan='sm' styles={{ display: 'none' }}>
-						<Aside
-							p='md'
-							hiddenBreakpoint='sm'
-							width={{ sm: 150, lg: 300, md: 150, xl: 300, xxl: 500 }}
-							style={{
-								background: theme.black,
-								height: '100%',
-								display: (nonHomePagePath.includes(router.pathname)) || width <= theme.breakpoints.sm ? 'none' : 'block',
-								//display: !homePage ? 'none' : 'block',
-							}}
-							mt='lg'
-							hidden={nonHomePagePath.includes(router.pathname) || width <= theme.breakpoints.sm}
-						>
-							<Group
-								position='center'
-								style={{ width: '100%', display: homePage ? 'block' : 'none' }}
-							>
-								<Box
-									sx={{
-										width: '100%',
-									}}
-									p='md'
-								>
-									<Group position='center'>
-										{/* <Text size='sm'>Following suggestion</Text> */}
-									</Group>
-								</Box>
-							</Group>
-						</Aside>
-					</MediaQuery>
-				}
+				navbar={<MainNavbar />}
+				aside={<Aside />}
 				header={
 					<>
-						<Header height={70} style={styles.header}>
+						<Header height={70} className={classes.header}>
 							<Modal
 								opened={opened}
 								title='Register'
-								//onClose={() => router.push('/')}
 								onClose={() => setOpened(false)}
 							>
 								<>
@@ -369,7 +273,7 @@ const Page = observer(({ title, children, homePage }: pageProps) => {
 									</Group>
 								</>
 							</Modal>
-							<Grid justify='space-between' style={styles.innerHeader}>
+							<Grid justify='space-between' className={classes.innerHeader}>
 								<Box
 									style={{
 										display: 'flex',
@@ -378,56 +282,79 @@ const Page = observer(({ title, children, homePage }: pageProps) => {
 									}}
 								>
 									<Link href='/' passHref>
-										<UnstyledButton>
-											<Text weight='bold' ml='sm' style={{ fontSize: '2rem' }}>
-												Greet
-											</Text>
-										</UnstyledButton>
+										<Text weight='bold' ml='sm' style={{ fontSize: '2rem' }}>
+											Greet
+										</Text>
 									</Link>
 								</Box>
-
+								{/* BsSunFill */}
 								<Group>
+									<ActionIcon
+										size='lg'
+										onClick={() => toggleColorScheme()}
+										color='yellow'
+									>
+										{theme.colorScheme === 'dark' ? (
+											<BsSun size={'100%'} />
+										) : (
+											<BiMoon size={'100%'} />
+										)}
+									</ActionIcon>
 									{width >= theme.breakpoints.sm && isAuthenticated && (
 										<>
 											{data[0] && !isLoading && !isFetching ? (
 												<>
-													<Link href={'/newGreet'} scroll={false} passHref>
+													<Link href={'/newGreet'} scroll={false} passHref >
 														<ActionIcon size='xl'>
 															<Plus size={'100%'} />
 														</ActionIcon>
 													</Link>
-													<ActionIcon size='xl'>
-														<Bell size={'100%'} />
-													</ActionIcon>
-													<Link
-														href={{pathname:"profile",query:{id:`${data[0].get('uid')}`}}}
-														passHref
+													<Indicator
+														disabled={true}
+														offset={7}
+														size={20}
+														label={0}
+														color='red'
 													>
-														{/* <UnstyledButton mr='sm'>
-													
-												</UnstyledButton> */}
-														<Group style={{ cursor: 'pointer' }}>
-															<Avatar
-																src={data[0]?.get('profile_pic')?.url()}
-																size='md'
-															>
-																<CgProfile size='100%' />
-															</Avatar>
-															<Box>
-																<Text
-																	style={{
-																		width: '120px',
-																		overflow: 'hidden',
-																		textOverflow: 'ellipsis',
-																	}}
-																	weight='bolder'
+														<ActionIcon size='xl'>
+															<Bell size={'100%'} />
+														</ActionIcon>
+													</Indicator>
+													<Tooltip label={`Address: ${data[0].get('userAddress')}`}>
+														<Link
+															href={{
+																pathname: '/profile',
+																query: { id: `${data[0].get('uid')}` },
+															}}
+															passHref
+														>
+															<Group style={{ cursor: 'pointer' }}>
+																<Avatar
+																	src={data[0]?.get('profile_pic')?.url()}
+																	size='md'
+																	placeholder='blur'
 																>
-																	{user?.get('ethAddress')}
-																</Text>
-																{data[0] ? data[0].get('userName') : 'Unnamed'}
-															</Box>
-														</Group>
-													</Link>
+																	<CgProfile size='100%' />
+																</Avatar>
+
+																<Box>
+																	<Text
+																		style={{
+																			width: '120px',
+																			overflow: 'hidden',
+																			textOverflow: 'ellipsis',
+																		}}
+																		weight='bolder'
+																	>
+																		{user?.get('ethAddress')}
+																	</Text>
+																	{data[0]
+																		? data[0].get('userName')
+																		: 'Unnamed'}
+																</Box>
+															</Group>
+														</Link>
+													</Tooltip>
 												</>
 											) : (
 												<>
@@ -497,14 +424,54 @@ const Page = observer(({ title, children, homePage }: pageProps) => {
 					</>
 				}
 				footer={
-					data[0] && <MobileNavBar profileId={data[0].get('uid')} image={data[0].get("profile_pic")?.url()} />
+					data[0] && (
+						<MobileNavBar
+							profileId={data[0].get('uid')}
+							image={data[0].get('profile_pic')?.url()}
+						/>
+					)
 				}
 			>
 				{children}
-				
 			</AppShell>
 		</>
 	)
+})
+
+const useStyles = createStyles((theme) => {
+	const router = useRouter()
+	const { width } = useViewportSize()
+	return {
+		header: {
+			backgroundColor: theme.colorScheme === 'dark' ? theme.black : theme.white,
+		},
+		innerHeader: {
+			borderBottom: '5px dashed',
+			backgroundColor: theme.colorScheme === 'dark' ? theme.black : theme.white,
+			borderImage:
+				'linear-gradient(to right, #364fc7 0%, #3b5bdb 25%, #1c7eed 75%, #15aabf 100% )',
+			borderImageSlice: 1,
+			margin: 0,
+			height: '70px',
+		},
+		secondHeader: {
+			backgroundColor: theme.black,
+			height: '50px',
+		},
+		mobileUpperNavbarNormal: {
+			fontSize: '',
+		},
+		aside: {
+			background: theme.colorScheme === 'dark' ? theme.black : theme.white,
+			height: '100%',
+			display:
+				nonHomePagePath.includes(router.pathname) ||
+				width <= theme.breakpoints.sm
+					? 'none'
+					: 'block',
+			border: 'none',
+		},
+	}
 })
 
 export default Page

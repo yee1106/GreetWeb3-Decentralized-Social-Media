@@ -128,7 +128,7 @@ const ProfileCard = (props: ProfileProps) => {
 			<Card
 				p='lg'
 				style={{
-					backgroundColor: theme.colors.dark[9],
+					backgroundColor: theme.colorScheme === "dark" ? theme.colors.dark[9] : theme.white,
 					border: '1px solid',
 					borderColor: theme.colors.gray[7],
 				}}

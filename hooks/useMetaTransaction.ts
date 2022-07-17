@@ -39,7 +39,7 @@ export const useMetaTransaction = <T extends Contract>(
 				{
 					walletProvider: window.ethereum,
 					apiKey: process.env.NEXT_PUBLIC_BICONOMY_API_KEY as string,
-					debug: true,
+					//debug: true,
 				}
 			)
 			setBiconomy(biconomy)

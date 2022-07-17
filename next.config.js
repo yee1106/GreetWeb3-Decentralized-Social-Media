@@ -19,6 +19,10 @@ module.exports = withPWA({
 		NEXT_PUBLIC_MORALIS_SERVER_URL:process.env.NEXT_PUBLIC_MORALIS_SERVER_URL,
 		NEXT_PUBLIC_MORALIS_APP_ID:process.env.NEXT_PUBLIC_MORALIS_APP_ID
 	},
+	reactStrictMode:false,
+	images: {
+    domains: ['storageapi.fleek.co'],
+  },
 	//trailingSlash: true,
 	
 
