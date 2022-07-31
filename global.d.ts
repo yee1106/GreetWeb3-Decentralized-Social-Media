@@ -26,6 +26,14 @@ declare global {
 		videos?:MediaURI
 		text: string
 	}
+	interface GreetComment{
+		text: string,
+		image? : string
+		timestamp:string,
+		userId:string,
+		userName:string,
+		commentId:string
+	}
 	const Moralis: MoralisDef
 
 }

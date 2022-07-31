@@ -6,6 +6,8 @@ import {
 	MantineTheme,
 	Navbar,
 	createStyles,
+	Stack,
+	Button,
 } from '@mantine/core'
 import {
 	CircleCheck,
@@ -35,7 +37,7 @@ const MainNavLink = ({ color, icon, href, text, textColor }: navLinkProps) => {
 	let router = useRouter()
 
 	return (
-		<Link href={href} passHref scroll={false}>
+		<Link href={href} passHref>
 			<UnstyledButton
 				sx={{
 					width: '100%',
@@ -58,15 +60,15 @@ const MainNavLink = ({ color, icon, href, text, textColor }: navLinkProps) => {
 
 const links = {
 	home: '/',
-	//following: '/following',
+	following: '/following',
 	explore: '/explore',
 }
 
 export const MainNavbar = () => {
 	const theme = useMantineTheme()
-	const {width} = useViewportSize()
+	const { width } = useViewportSize()
 	const router = useRouter()
-	const {classes} = useStyles({router})
+	const { classes } = useStyles({ router })
 	let setActive = (route: string) =>
 		router.pathname === route
 			? theme.colors.indigo[7]
@@ -81,7 +83,10 @@ export const MainNavbar = () => {
 			className={classes.navbar}
 			mt='lg'
 		>
-			<Group position='center' direction='row' style={{ width: '100%' }}>
+			{/* <Link href='/test2' passHref>
+				<Button>Test</Button>
+			</Link> */}
+			<Stack justify={'center'} style={{ width: '100%' }}>
 				<MainNavLink
 					color={
 						theme.colorScheme === 'dark'
@@ -94,14 +99,18 @@ export const MainNavbar = () => {
 					textColor={setActive(links.home)}
 				/>
 				{/* <MainNavLink
-				color={theme.colors.dark[5]}
-				href={links.following}
-				icon={
-					<MdOutlineFavorite size={20} color={setActive(links.following)} />
-				}
-				text='Following'
-				textColor={setActive(links.following)}
-			/> */}
+					color={
+						theme.colorScheme === 'dark'
+							? theme.colors.dark[5]
+							: theme.colors.gray[0]
+					}
+					href={links.following}
+					icon={
+						<MdOutlineFavorite size={20} color={setActive(links.following)} />
+					}
+					text='Following'
+					textColor={setActive(links.following)}
+				/> */}
 				<MainNavLink
 					color={
 						theme.colorScheme === 'dark'
@@ -113,15 +122,15 @@ export const MainNavbar = () => {
 					text='Explore'
 					textColor={setActive(links.explore)}
 				/>
-			</Group>
+			</Stack>
 		</Navbar>
 	) : (
 		<></>
 	)
 }
 
-const useStyles = createStyles((theme,{router}:{router:NextRouter})=>{
-	return{
+const useStyles = createStyles((theme, { router }: { router: NextRouter }) => {
+	return {
 		navbar: {
 			border: 'none',
 			background: theme.colorScheme === 'dark' ? theme.black : theme.white,

@@ -14,6 +14,7 @@ import {
 	Button,
 	Card,
 	Group,
+	Stack,
 	Text,
 	Title,
 	useMantineTheme,
@@ -149,7 +150,7 @@ const ProfileCard = (props: ProfileProps) => {
 					{/* {!self && ()} */}
 				</Group>
 				<Group position='center' align='flex-start'>
-					<Group direction='column' position='center' align='center'>
+					<Stack align='center' justify={'center'}>
 						<Avatar
 							radius='lg'
 							color='dark'
@@ -165,7 +166,7 @@ const ProfileCard = (props: ProfileProps) => {
 						{!props.self && !connectionQuery.loading && (
 							<FollowButton followed={isFollowed} />
 						)}
-					</Group>
+					</Stack>
 				</Group>
 				<Group position='center' mt='md'>
 					<Box>

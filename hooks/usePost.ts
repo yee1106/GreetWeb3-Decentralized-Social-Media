@@ -5,7 +5,7 @@ import axios from 'axios'
 import MainFeedStore from '@/store/feed/mainFeed'
 import UserFeedStore from '@/store/feed/userFeedStore'
 import Moralis from 'moralis/types'
-import { useDidUpdate } from '@mantine/hooks'
+import { useDidUpdate, useForceUpdate, useListState } from '@mantine/hooks'
 
 interface UsePostConfig {
 	userId?: string | string[] | undefined
@@ -104,6 +104,7 @@ export function usePostV2(config?: UsePostConfig) {
 
 	const fetchMore = async () => {
 		//MainFeedStore.setPage(1)
+		setLoading(true)
 		MainFeedStore.getPage() === 1 && MainFeedStore.addPage()
 		let post = await fetchPost()
 		//alert(post?.at(-1)?.get("uid"))
@@ -120,6 +121,7 @@ export function usePostV2(config?: UsePostConfig) {
 		}
 		let formatted = await getFormattedFeed(post || [])
 		formatted.length !== 0 && MainFeedStore.addLoadedFeed(formatted)
+		setLoading(false)
 		//setPage(p=>p+1)
 		MainFeedStore.addPage()
 	}
@@ -164,6 +166,7 @@ export function usePostFromUser(config?: UsePostConfig) {
 	const [hasMore, setHasMore] = useState(true)
 	const [feed, setFeed] = useState<Feed[]>([])
 	const { Moralis, isInitialized } = useMoralis()
+	
 	let {
 		result: userByid,
 		userName,
@@ -241,6 +244,112 @@ export function usePostFromUser(config?: UsePostConfig) {
 	}
 }
 
+export function useComment({ id }: { id: string }) {
+	const pageSize = 5
+	const { Moralis, isInitialized } = useMoralis()
+	const [commentData, setCommentData] = useState<GreetComment[]>([])
+	const [loading, setLoading] = useState(true)
+	const [page, setPage] = useState(1)
+	const [hasMore, setHasMore] = useState(true)
+
+	const fetchComment = async () => {
+		if (isInitialized) {
+			//console.log(id)
+			const commentQuery = new Moralis.Query('GreetComment')
+			commentQuery
+				.equalTo('greet_id', id)
+				.descending('createdAt')
+				.skip((page - 1) * pageSize)
+				.limit(pageSize)
+			let comment = await commentQuery.find()
+			//console.log(comment[0]?.get("greet_id"))
+			return comment
+		}
+	}
+
+	const fetchMore = async () => {
+		setLoading(true)
+		let comment = await fetchComment()
+		if (comment?.length === 0 || !comment) {
+			setHasMore(false)
+			return
+		}
+		let commentData = getCommentData(comment)
+		commentData.length !== 0 && setCommentData((c) => c.concat(commentData))
+		setLoading(false)
+		setPage((p) => p + 1)
+	}
+
+	const initialComment = async () => {
+		setLoading(true)
+		let comment = await fetchComment()
+		// console.log(comment)
+		let commentData = getCommentData(comment || [])
+		commentData.length !== 0 && setCommentData((c) => c.concat(commentData))
+		// let formatted = await getFormattedFeed(post || [])
+		// formatted.length !== 0 && MainFeedStore.addLoadedFeed(formatted)
+		setLoading(false)
+		setPage((p) => p + 1)
+	}
+
+	const newCommentUpdate = (comment: Moralis.Object<Moralis.Attributes>)=>{
+		let newComment = getCommentData([comment])
+		setCommentData(c=>[...newComment,...c])
+	}
+
+	const deleteCommentUpdate = (id:string)=>{
+		setCommentData(c=>c.filter(cmt=>cmt.commentId !== id))
+	}
+
+
+	useEffect(() => {
+		//MainFeedStore.clearloadedFeed()
+		//isInitialized && initialComment()
+		if(isInitialized){
+			initialComment()
+		}
+	}, [isInitialized])
+
+	useEffect(() => {
+		console.log(commentData)
+	}, [commentData])
+
+	return {
+		fetchMore: fetchMore,
+		comment: commentData || [],
+		count: commentData.length,
+		hasMore: hasMore,
+		loading,
+		newCommentUpdate:newCommentUpdate,
+		deleteCommentUpdate:deleteCommentUpdate,
+	}
+}
+
+export function useCommentCount(id: string) {
+	const { Moralis, isInitialized } = useMoralis()
+	const [count, setCount] = useState(0)
+	const fetchCommentCount = async () => {
+		if (isInitialized) {
+			//console.log(id)
+			const commentQuery = new Moralis.Query('GreetComment')
+			commentQuery.equalTo('greet_id', id)
+			let commentCount = await commentQuery.count()
+
+			setCount(commentCount)
+		}
+	}
+	const updateCount = ()=>{
+		fetchCommentCount()
+	}
+	useEffect(() => {
+		isInitialized && fetchCommentCount()
+	}, [isInitialized])
+	return {
+		count,
+		updateCount
+	}
+}
+
 const getFormattedFeed = async (
 	feedData: Moralis.Object<Moralis.Attributes>[]
 ) => {
@@ -260,4 +369,26 @@ const getFormattedFeed = async (
 		timestamp: timestamp[i],
 	}))
 	return formattedData
+}
+
+// await save({
+// 	content: comment,
+// 	greet_id: id,
+// 	comment_by_user_id: currentUser.get('uid'),
+// 	username: currentUser.get('userName'),
+// 	image: new Moralis.File(file.name, file),
+// })
+
+function getCommentData(commentData: Moralis.Object<Moralis.Attributes>[]) {
+	let fetchedComment: GreetComment[] = commentData.map((c) => ({
+		text: c.get('content'),
+		userName: c.get('username'),
+		userId: c.get('comment_by_user_id'),
+		image: c.get('image')?.url() || "",
+		timestamp: new Date(c.get('createdAt')).getTime().toString(),
+		commentId: c.id
+	}))
+	//console.log(commentData)
+
+	return fetchedComment
 }

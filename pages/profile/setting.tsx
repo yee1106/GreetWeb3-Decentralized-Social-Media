@@ -8,6 +8,7 @@ import {
 	Card,
 	Center,
 	Group,
+	Stack,
 	Text,
 	TextInput,
 	Title,
@@ -75,7 +76,7 @@ const Setting = () => {
 					</Text>
 				</Group>
 				<Group position='center' align='flex-start'>
-					<Group position='center' direction='column'>
+					<Stack align={'center'} justify='center'>
 						<Avatar
 							radius='lg'
 							color='dark'
@@ -89,7 +90,7 @@ const Setting = () => {
 						<Text size='sm'>
 							{data[0]?.get('description') || 'Default description'}
 						</Text>
-					</Group>
+					</Stack>
 				</Group>
 				<Group position='center' mt='sm'>
 					<TextInput

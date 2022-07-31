@@ -46,6 +46,7 @@ import { useRouter } from 'next/router'
 import { upload } from '@fleekhq/fleek-storage-js'
 import safeFileName from 'slugify'
 import useMetaTransaction from '@/hooks/useMetaTransaction'
+import { BaseContract, Contract, ethers } from 'ethers'
 
 const s3 = new S3({
 	accessKeyId: process.env.NEXT_PUBLIC_FLEEK_API_KEY,
@@ -81,7 +82,10 @@ const NewGreet = () => {
 	const [modalOpened, setModalOpened] = useState<boolean>(false)
 	const [txLoading, setTxLoading] = useState<boolean>(false)
 	const [txHash, setTxHash] = useState<string>('')
-	const gaslessTransaction = useMetaTransaction<Greet>(config.contractAddress.Greet, GreetAbi.abi)
+	const gaslessTransaction = useMetaTransaction<Greet>(
+		config.contractAddress.Greet,
+		GreetAbi.abi
+	)
 	const { data, error, isLoading, isFetching, fetch } = useMoralisQuery(
 		'NewUser',
 		(q) => q.equalTo('userAddress', user?.get('ethAddress')).limit(1),
@@ -201,7 +205,7 @@ const NewGreet = () => {
 		}
 
 		//Initialize the post smart contract
-		let greetContract: Greet = new web3Library.Contract(
+		let greetContract = new ethers.Contract(
 			config.contractAddress.Greet,
 			GreetAbi.abi,
 			web3?.getSigner()
@@ -214,48 +218,48 @@ const NewGreet = () => {
 		)
 
 		//Mint/create the post on the smart contract
-			try {
-				if (gaslessTransaction.ready && gaslessTransaction.contract && account) {
-					setTxLoading(true)
+		try {
+			if (gaslessTransaction.ready && gaslessTransaction.contract && account) {
+				setTxLoading(true)
 
-					let tx = await greetContract.mint(1, tokenURI, {
-						gasLimit: web3Library.utils.hexlify(500000),
-						gasPrice: estimateGas,
-					})
-					// let functionData =
-					// 	await gaslessTransaction.contract?.populateTransaction.mint(
-					// 		1,
-					// 		tokenURI
-					// 	)
-					// let response = await gaslessTransaction.sendMetaTransaction(
-					// 	functionData,
-					// 	account
-					// )
-					// //let txt = await
-					// setTxHash(response)
-					// await gaslessTransaction.waitTransaction(response)
-					setTxHash(tx.hash)
-					await tx.wait()
-					setTxLoading(false)
-					showNotification({
-						title: 'Success',
-						message: 'Greet Posted',
-						autoClose: 2500,
-						disallowClose: true,
-						color: 'green',
-					})
-				}
-			} catch (error) {
+				let tx = await greetContract.mint(1, tokenURI, {
+					gasLimit: web3Library.utils.hexlify(500000),
+					gasPrice: estimateGas,
+				})
+				// let functionData =
+				// 	await gaslessTransaction.contract?.populateTransaction.mint(
+				// 		1,
+				// 		tokenURI
+				// 	)
+				// let response = await gaslessTransaction.sendMetaTransaction(
+				// 	functionData,
+				// 	account
+				// )
+				// //let txt = await
+				// setTxHash(response)
+				// await gaslessTransaction.waitTransaction(response)
+				setTxHash(tx.hash)
+				await tx.wait()
 				setTxLoading(false)
 				showNotification({
-					title: 'Error',
-					message: 'Create Greet failed, please try again',
+					title: 'Success',
+					message: 'Greet Posted',
 					autoClose: 2500,
 					disallowClose: true,
-					color: 'red',
-					icon: <BiErrorCircle size='100%' />,
+					color: 'green',
 				})
 			}
+		} catch (error) {
+			setTxLoading(false)
+			showNotification({
+				title: 'Error',
+				message: 'Create Greet failed, please try again',
+				autoClose: 2500,
+				disallowClose: true,
+				color: 'red',
+				icon: <BiErrorCircle size='100%' />,
+			})
+		}
 	}
 
 	const uploadAllMediaFile = async () => {
@@ -330,7 +334,8 @@ const NewGreet = () => {
 			<Card
 				p='lg'
 				style={{
-					backgroundColor:  theme.colorScheme === 'dark' ? theme.colors.dark[9] : theme.white,
+					backgroundColor:
+						theme.colorScheme === 'dark' ? theme.colors.dark[9] : theme.white,
 					border: '1px solid',
 					borderColor: theme.colors.gray[7],
 					height: '100%',
@@ -415,11 +420,27 @@ const NewGreet = () => {
 							justifyContent: 'center',
 						}}
 					>
-						{(status) => (
-							<Center>
-								<BiImageAdd size={'80%'} />
-							</Center>
-						)}
+						<Dropzone.Idle>
+							<Group>
+								<Box>
+									<BiImageAdd size={'100%'} />
+								</Box>
+							</Group>
+						</Dropzone.Idle>
+						<Dropzone.Accept>
+							<Group>
+								<Box>
+									<BiImageAdd size={'100%'} color={theme.colors.green[9]} />
+								</Box>
+							</Group>
+						</Dropzone.Accept>
+						<Dropzone.Reject>
+							<Group>
+								<Box>
+									<BiImageAdd size={'100%'} color={theme.colors.red[9]} />
+								</Box>
+							</Group>
+						</Dropzone.Reject>
 					</Dropzone>
 				</Group>
 				<Box mt='lg'>

@@ -1,8 +1,4 @@
-import {
-	Contract,
-	ethers,
-	PopulatedTransaction,
-} from 'ethers'
+import { Contract, ethers, PopulatedTransaction } from 'ethers'
 import { Biconomy } from '@biconomy/mexa'
 import { useEffect, useState } from 'react'
 import { useMoralis } from 'react-moralis'
@@ -18,7 +14,7 @@ export const useMetaTransaction = <T extends Contract>(
 	)
 	let [ready, setReady] = useState<boolean>(false)
 	let [error, setError] = useState<boolean>(false)
-	let [biconomy, setBiconomy] = useState<any>(null)
+	let [biconomy, setBiconomy] = useState<Biconomy | null>(null)
 
 	useEffect(() => {
 		let init = async () => {
@@ -27,27 +23,19 @@ export const useMetaTransaction = <T extends Contract>(
 				process.env.NEXT_PUBLIC_ALCHEMY_MUMBAI_NODE as string
 			)
 			let viewContract = <T>(
-				new Moralis.web3Library.Contract(
-					address,
-					contractInterface,
-					networkProvider
-				)
+				new ethers.Contract(address, contractInterface, networkProvider)
 			)
 			setReadOnlyContract(viewContract)
-			let biconomy = new Biconomy(
-				networkProvider,
-				{
-					walletProvider: window.ethereum,
-					apiKey: process.env.NEXT_PUBLIC_BICONOMY_API_KEY as string,
-					//debug: true,
-				}
-			)
+			let biconomy = new Biconomy(networkProvider, {
+				walletProvider: window.ethereum,
+				apiKey: process.env.NEXT_PUBLIC_BICONOMY_API_KEY as string,
+				//debug: true,
+			})
 			setBiconomy(biconomy)
-
 			biconomy
 				.onEvent(biconomy.READY, () => {
 					let Contract = <T>(
-						new Moralis.web3Library.Contract(
+						new ethers.Contract(
 							address,
 							contractInterface,
 							biconomy.getSignerByAddress(userAddress)
@@ -56,13 +44,12 @@ export const useMetaTransaction = <T extends Contract>(
 					setContract(Contract)
 					setReady(true)
 				})
-				.onEvent(biconomy.ERROR, (error, message) => {
-					console.log(message)
-					console.log(error)
+				.onEvent(biconomy.ERROR, () => {
+					setReady(false)
 					setError(true)
 				})
 		}
-		(window.ethereum || typeof window !== undefined) && init()
+		;(window.ethereum || typeof window !== undefined) && init()
 		return () => {
 			setContract(undefined)
 			setReadOnlyContract(undefined)
@@ -78,9 +65,8 @@ export const useMetaTransaction = <T extends Contract>(
 		return new Promise(async (resolve, reject) => {
 			if (biconomy !== null && contract) {
 				try {
-					let provider = <ethers.providers.Web3Provider>(
-						biconomy.getEthersProvider()
-					)
+					let provider =
+						biconomy.getEthersProvider() as ethers.providers.Web3Provider
 					let gasPrice = await web3?.getGasPrice()
 					let txParams = {
 						data: functionData.data,
@@ -112,18 +98,16 @@ export const useMetaTransaction = <T extends Contract>(
 			try {
 				if (web3) {
 					let provider = web3
-					let response = await provider.waitForTransaction(tx,1)
+					let response = await provider.waitForTransaction(tx, 1)
 					resolve(response.transactionHash)
-				}else{
-					resolve("")
+				} else {
+					resolve('')
 				}
 			} catch (error) {
 				reject(error)
 			}
 		})
 	}
-
-	
 
 	return {
 		contract,

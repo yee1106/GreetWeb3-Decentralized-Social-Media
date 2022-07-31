@@ -17,6 +17,7 @@ import { useChain, useMoralis } from "react-moralis"
 import { GreetUser } from "@/typechain-types"
 import GreetUserAbi from '@/artifacts/contracts/GreetUser.sol/GreetUser.json'
 import config from '@/utils/config.json'
+import { Contract } from 'ethers'
 
 
 const Following = () => {
@@ -29,7 +30,7 @@ const Following = () => {
 
 
 	useEffect(() => {
-		let userContract = new web3Library.Contract(
+		let userContract = new Contract(
 			config.contractAddress.User,
 			GreetUserAbi.abi,
 			web3?.getSigner()

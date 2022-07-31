@@ -12,6 +12,7 @@ import {
 	Title,
 	Card,
 	useMantineTheme,
+	Stack,
 } from '@mantine/core'
 import { useDebouncedValue } from '@mantine/hooks'
 import Link from 'next/link'
@@ -42,7 +43,7 @@ const Explore = () => {
 	// 			q.matches('userAddress', new RegExp(`${debouncedText}`,'i'))
 	// 		).limit(10),
 	// 	[debouncedText],
-		
+
 	// )
 	//Moralis.Query.or()
 
@@ -68,14 +69,24 @@ const Explore = () => {
 						p='lg'
 						key={i}
 						style={{
-							backgroundColor: theme.colorScheme === 'dark'? theme.colors.dark[9] : theme.white,
+							backgroundColor:
+								theme.colorScheme === 'dark'
+									? theme.colors.dark[9]
+									: theme.white,
 							border: '1px solid',
 							borderColor: theme.colors.gray[7],
 						}}
 						radius='lg'
 						mt='sm'
 					>
-						<Link href={`/profile/${d?.get('uid')}`} passHref>
+						{/* test  href={{
+																	pathname: '/profile',
+																	query: { id: `${data[0].get('uid')}` },
+																}} */}
+						<Link
+							href={{ pathname: '/profile', query: { id: `${d?.get('uid')}` } }}
+							passHref
+						>
 							<Group
 								position='left'
 								align='center'
@@ -90,14 +101,12 @@ const Explore = () => {
 								>
 									<CgProfile size={'100%'} />
 								</Avatar>
-								<Group direction='column'>
-									<Title order={5}>
-										{d.get('userName')}
-									</Title>
+								<Stack>
+									<Title order={5}>{d.get('userName')}</Title>
 									<Text>
 										Address:<Text>{d?.get('userAddress')}</Text>
 									</Text>
-								</Group>
+								</Stack>
 							</Group>
 						</Link>
 					</Card>

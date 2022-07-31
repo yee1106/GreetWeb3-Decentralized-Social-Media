@@ -20,7 +20,6 @@ import {
 	Indicator,
 	createStyles,
 	Tooltip,
-	FloatingTooltip,
 } from '@mantine/core'
 import {
 	hideNotification,
@@ -49,6 +48,7 @@ import useMetaTransaction from '@/hooks/useMetaTransaction'
 import { nonHomePagePath } from '@/utils/constants/constants'
 import Register from './register'
 import Aside from './aside'
+import { ethers } from 'ethers'
 
 interface pageProps {
 	title: string
@@ -110,7 +110,7 @@ const Page = observer(({ title, children, homePage }: pageProps) => {
 			return
 		}
 		try {
-			userContract = new web3Library.Contract(
+			userContract = new ethers.Contract(
 				config.contractAddress.User,
 				GreetUserAbi.abi,
 				web3?.getSigner()
@@ -226,6 +226,7 @@ const Page = observer(({ title, children, homePage }: pageProps) => {
 			signingMessage:
 				'Welcome from Greet, Sign this message to connect to the app',
 		})
+		router.push("/")
 	}
 
 	return (
@@ -304,7 +305,7 @@ const Page = observer(({ title, children, homePage }: pageProps) => {
 										<>
 											{data[0] && !isLoading && !isFetching ? (
 												<>
-													<Link href={'/newGreet'} scroll={false} passHref >
+													<Link href={'/newGreet'} scroll={false} passHref>
 														<ActionIcon size='xl'>
 															<Plus size={'100%'} />
 														</ActionIcon>
@@ -320,40 +321,44 @@ const Page = observer(({ title, children, homePage }: pageProps) => {
 															<Bell size={'100%'} />
 														</ActionIcon>
 													</Indicator>
-													<Tooltip label={`Address: ${data[0].get('userAddress')}`}>
-														<Link
-															href={{
-																pathname: '/profile',
-																query: { id: `${data[0].get('uid')}` },
-															}}
-															passHref
-														>
-															<Group style={{ cursor: 'pointer' }}>
-																<Avatar
-																	src={data[0]?.get('profile_pic')?.url()}
-																	size='md'
-																	placeholder='blur'
-																>
-																	<CgProfile size='100%' />
-																</Avatar>
-
-																<Box>
-																	<Text
-																		style={{
-																			width: '120px',
-																			overflow: 'hidden',
-																			textOverflow: 'ellipsis',
-																		}}
-																		weight='bolder'
+													<Tooltip
+														label={`Address: ${data[0].get('userAddress')}`}
+													>
+														<Box>
+															<Link
+																href={{
+																	pathname: '/profile',
+																	query: { id: `${data[0].get('uid')}` },
+																}}
+																passHref
+															>
+																<Group style={{ cursor: 'pointer' }}>
+																	<Avatar
+																		src={data[0]?.get('profile_pic')?.url()}
+																		size='md'
+																		placeholder='blur'
 																	>
-																		{user?.get('ethAddress')}
-																	</Text>
-																	{data[0]
-																		? data[0].get('userName')
-																		: 'Unnamed'}
-																</Box>
-															</Group>
-														</Link>
+																		<CgProfile size='100%' />
+																	</Avatar>
+
+																	<Box>
+																		<Text
+																			style={{
+																				width: '120px',
+																				overflow: 'hidden',
+																				textOverflow: 'ellipsis',
+																			}}
+																			weight='bolder'
+																		>
+																			{user?.get('ethAddress')}
+																		</Text>
+																		{data[0]
+																			? data[0].get('userName')
+																			: 'Unnamed'}
+																	</Box>
+																</Group>
+															</Link>
+														</Box>
 													</Tooltip>
 												</>
 											) : (
@@ -411,7 +416,6 @@ const Page = observer(({ title, children, homePage }: pageProps) => {
 												onClick={() => {
 													router.push('/')
 													logout()
-													location.reload()
 												}}
 											>
 												<Text size='md'>Disconnect</Text>
@@ -444,6 +448,7 @@ const useStyles = createStyles((theme) => {
 	return {
 		header: {
 			backgroundColor: theme.colorScheme === 'dark' ? theme.black : theme.white,
+			zindex: 1,
 		},
 		innerHeader: {
 			borderBottom: '5px dashed',

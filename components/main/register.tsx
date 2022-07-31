@@ -5,6 +5,7 @@ import { SetStateAction, useEffect, useState } from "react"
 import { useChain, useMoralis } from "react-moralis"
 import GreetUserAbi from '@/artifacts/contracts/GreetUser.sol/GreetUser.json'
 import config from '@/utils/config.json'
+import { ethers } from "ethers"
 
 interface RegisterProps{
   open:boolean
@@ -37,7 +38,7 @@ const Register = ({open}:RegisterProps) => {
 			return
 		}
 		try {
-			let userContract = new web3Library.Contract(
+			let userContract = new ethers.Contract(
 				config.contractAddress.User,
 				GreetUserAbi.abi,
 				web3?.getSigner()
@@ -64,7 +65,7 @@ const Register = ({open}:RegisterProps) => {
 	}
 
 	useEffect(() => {
-		let userContract = new web3Library.Contract(
+		let userContract = new ethers.Contract(
 			config.contractAddress.User,
 			GreetUserAbi.abi,
 			web3?.getSigner()

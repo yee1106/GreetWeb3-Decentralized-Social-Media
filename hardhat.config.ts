@@ -46,7 +46,7 @@ const hardhatConfig: HardhatUserConfig = {
 			chainId: 1337,
 		},
 		mumbai: {
-			url: 'https://speedy-nodes-nyc.moralis.io/403a6660403ac5963d746231/polygon/mumbai',
+			url: 'https://polygon-mumbai.g.alchemy.com/v2/3ktQR46Bj7ndMMKiUcuSk8YNCTyHkaEM',
 			accounts: [`${process.env.ACCOUNT}`],
 			// gas: 21000000,
       // gasPrice: 8000000000

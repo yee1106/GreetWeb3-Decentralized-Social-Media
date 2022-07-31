@@ -16,6 +16,7 @@ import { MoralisProvider } from 'react-moralis'
 import { ApolloClient, InMemoryCache, ApolloProvider } from '@apollo/client'
 import Page from '@/components/main/Page'
 import { useColorScheme, useLocalStorage } from '@mantine/hooks'
+import NextNProgress from "nextjs-progressbar";
 // import "swiper/swiper-bundle.min.css";
 // import "swiper/swiper.min.css";
 
@@ -62,6 +63,7 @@ const App = ({ Component, pageProps, router }: AppProps) => {
 								<ModalsProvider>
 									<Meta />
 									<GlobalStyle />
+									<NextNProgress color={'linear-gradient(to right, #364fc7 0%, #3b5bdb 25%, #1c7eed 75%, #15aabf 100% )'} height={3} />
 									<Page title='test' homePage={true}>
 										<Component {...pageProps} />
 									</Page>

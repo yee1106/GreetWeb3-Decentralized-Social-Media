@@ -25,6 +25,9 @@ import {
 	Center,
 	Loader,
 	Image,
+	ActionIcon,
+	Tooltip,
+	MenuProps,
 } from '@mantine/core'
 import {
 	useMediaQuery,
@@ -32,12 +35,13 @@ import {
 	useToggle,
 	useViewportSize,
 	useWindowScroll,
+	useCounter,
+	useIntersection,
 } from '@mantine/hooks'
 import NextImage from 'next/image'
 import { CgProfile } from 'react-icons/cg'
 import { MdFavorite, MdOutlineFavorite } from 'react-icons/md'
 import { FaComment, FaEye } from 'react-icons/fa'
-import { IconType, IconBaseProps } from 'react-icons'
 import {
 	AiOutlineLeft,
 	AiOutlineRight,
@@ -50,9 +54,16 @@ import Link from 'next/link'
 import config from '@/utils/config.json'
 import { useCheckRegistered } from '@/hooks/useCheckRegistered'
 import { hideNotification, showNotification } from '@mantine/notifications'
-import { BiImageAdd, BiErrorCircle } from 'react-icons/bi'
+import {
+	BiImageAdd,
+	BiErrorCircle,
+	BiDotsHorizontalRounded,
+	BiHide
+} from 'react-icons/bi'
 import CommentInput from './comment/commentInput'
 import CommentSection from './comment/commentSection'
+import { useCommentCount } from '@/hooks/usePost'
+import { useSearchUserById } from '@/hooks/useSearchUserById'
 //import fleekStorage from '@fleekhq/fleek-storage-js'
 
 // interface feed {
@@ -85,6 +96,14 @@ const Feed = (props: Feed) => {
 	const [viewCount, setViewCount] = useState<number>(0)
 	const isRegistered = useCheckRegistered()
 	const { user } = useMoralis()
+	const commentCount = useCommentCount(props.id)
+	// const { ref, entry } = useIntersection({
+  //   root: document.body,
+	// 	rootMargin: "1px",
+  //   threshold: 1,
+  // });
+
+
 	const { data, isLoading, isFetching } = useMoralisQuery('NewUser', (q) =>
 		q.equalTo('userName', props.userName).limit(1)
 	)
@@ -102,6 +121,11 @@ const Feed = (props: Feed) => {
 		{
 			live: true,
 		}
+	)
+
+	const self = useMemo(
+		() => currentUser.data[0]?.get('uid') === data[0]?.get('uid'),
+		[currentUser.data, data]
 	)
 
 	const isLiked = useCallback(() => {
@@ -143,11 +167,11 @@ const Feed = (props: Feed) => {
 	useEffect(() => {
 		let addView = async () => {
 			let post = feedQuery.data[0]
-			currentUser.data[0] && post.relation('view').add(currentUser.data[0])
+			currentUser.data[0] && post?.relation('view').add(currentUser.data[0])
 			await post?.save()
 		}
 		addView()
-	}, [])
+	}, [currentUser.data, feedQuery.data])
 
 	//const [currentPosition, setCurrentPosition] = useState<number>(0)
 
@@ -177,8 +201,10 @@ const Feed = (props: Feed) => {
 
 	const onOpenMenu = () => {
 		if (mobile === true) {
+			//setMenuOpened(false)
 			setMobileMenuOpened(true)
-			setMenuOpened(false)
+		} else {
+			setMenuOpened(true)
 		}
 	}
 
@@ -221,7 +247,10 @@ const Feed = (props: Feed) => {
 		<Group position='center'>
 			<Box
 				my='md'
-				style={{ width: width <= theme.breakpoints.sm ? '100%' : '70%' }}
+				style={{
+					width: width <= theme.breakpoints.sm ? '100%' : '70%',
+					zIndex: 1,
+				}}
 			>
 				<Card
 					p='lg'
@@ -257,7 +286,7 @@ const Feed = (props: Feed) => {
 									</Avatar>
 								</Indicator>
 								<Box>
-									<Text weight={500} >{props.userName}</Text>
+									<Text weight={500}>{props.userName}</Text>
 									<Text
 										size='sm'
 										style={{ color: theme.colors.gray[6], lineHeight: 1.5 }}
@@ -269,30 +298,25 @@ const Feed = (props: Feed) => {
 							</Group>
 						</Link>
 						<Group>
-							<div>
+							<Box>
 								<Text
 									size='xs'
 									style={{ color: theme.colors.gray[6], lineHeight: 1.5 }}
 								>
 									GreetID: {props.id}
 								</Text>
-							</div>
-							<Menu
-								position='left'
-								size='xl'
-								mr='sm'
-								onClick={onOpenMenu}
-								opened={MenuOpened}
-								onOpen={() => setMenuOpened(true)}
-								onClose={() => setMenuOpened(false)}
-							>
-								<Menu.Label>Greet menu</Menu.Label>
-								<a href={verifyLink} target='_blank' rel='noreferrer'>
-									<Menu.Item icon={<AiOutlineCheckCircle size={20} />}>
-										Verify this Greet
-									</Menu.Item>
-								</a>
-							</Menu>
+							</Box>
+							{mobile ? (
+								<ActionIcon
+									onClick={() => {
+										setMobileMenuOpened(true)
+									}}
+								>
+									<BiDotsHorizontalRounded size={'100%'} />
+								</ActionIcon>
+							) : (
+								<MainFeedMenu onChange={setMenuOpened} self={self} />
+							)}
 						</Group>
 					</Group>
 					<Box my='sm'>
@@ -306,7 +330,7 @@ const Feed = (props: Feed) => {
 					<Card.Section>
 						{images && (
 							<ImageGallery
-								items={images ? images : []}
+								items={images}
 								showThumbnails={false}
 								//showIndex={true}
 								showBullets={images ? images.length > 1 : false}
@@ -371,7 +395,7 @@ const Feed = (props: Feed) => {
 							/>
 							<FeedButton
 								icon={<FaComment size={20} className='feedButton' />}
-								count={0}
+								count={commentCount.count}
 							/>
 
 							<Group align='center'>
@@ -380,7 +404,13 @@ const Feed = (props: Feed) => {
 							</Group>
 						</Group>
 					</Box>
-					<CommentSection/>
+					{data && (
+						<CommentSection
+							id={props.id}
+							count={commentCount.count}
+							updateCount={commentCount.updateCount}
+						/>
+					)}
 				</Card>
 			</Box>
 			<Drawer
@@ -441,6 +471,46 @@ const DrawerButton = ({
 				<Text size='sm'>{text}</Text>
 			</Group>
 		</UnstyledButton>
+	)
+}
+
+const MainFeedMenu = ({ onChange, self }: { onChange: any; self: boolean }) => {
+	return (
+		<Menu
+			position='bottom-end'
+			shadow={'md'}
+			width={200}
+			onChange={onChange}
+			withinPortal
+			zIndex={1}
+		>
+			<Menu.Target>
+				<ActionIcon>
+					<BiDotsHorizontalRounded size={'100%'} />
+				</ActionIcon>
+			</Menu.Target>
+			<Menu.Dropdown>
+				<Menu.Label>Greet menu</Menu.Label>
+
+				<Menu.Item
+					icon={<AiOutlineCheckCircle size={20} />}
+					component='a'
+					target='_blank'
+					rel='noopener noreferrer'
+					href={verifyLink}
+				>
+					Verify This Greet
+				</Menu.Item>
+				{self && (
+					<Menu.Item
+						icon={<BiHide size={20} />}
+						color='red'
+					>
+						Hide This Greet
+					</Menu.Item>
+				)}
+			</Menu.Dropdown>
+		</Menu>
 	)
 }
 
