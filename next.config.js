@@ -5,9 +5,6 @@ const runtimeCaching = require('next-pwa/cache')
  * @type {import('next').NextConfig}
  **/
 
-/**
- * @type {import('next-pwa')}
- **/
 module.exports = withPWA({
 	pwa: {
 		dest: 'public',
@@ -25,8 +22,5 @@ module.exports = withPWA({
 		NEXT_PUBLIC_MORALIS_APP_ID: process.env.NEXT_PUBLIC_MORALIS_APP_ID,
 	},
 	reactStrictMode: false,
-	images: {
-		domains: ['storageapi.fleek.co'],
-	},
 	//trailingSlash: true,
 })

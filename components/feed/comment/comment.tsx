@@ -14,7 +14,6 @@ import {
 import { showNotification } from '@mantine/notifications'
 import moment from 'moment'
 import Link from 'next/link'
-//import Image from "next/image"
 import { useState } from 'react'
 import { BiDotsHorizontalRounded } from 'react-icons/bi'
 import { CgProfile } from 'react-icons/cg'
@@ -170,7 +169,7 @@ const useStyles = createStyles((theme) => {
 			color: theme.colorScheme === 'dark' ? theme.white : theme.black,
 		},
 		commentBySelf: {
-			color: theme.colors.indigo[3],
+			color: theme.colors.indigo[6],
 		},
 		profileLink: {
 			cursor: 'pointer',

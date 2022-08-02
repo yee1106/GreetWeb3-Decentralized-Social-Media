@@ -10,10 +10,10 @@ import {
 	BackgroundImage,
 	FileButton,
 	AspectRatio,
+	Image
 } from '@mantine/core'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { BiImageAdd, BiSend } from 'react-icons/bi'
-import Image from 'next/image'
 import { AiOutlineClose } from 'react-icons/ai'
 
 interface CommentInputProps {

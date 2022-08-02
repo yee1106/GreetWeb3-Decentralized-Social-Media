@@ -38,7 +38,6 @@ import {
 	useCounter,
 	useIntersection,
 } from '@mantine/hooks'
-import NextImage from 'next/image'
 import { CgProfile } from 'react-icons/cg'
 import { MdFavorite, MdOutlineFavorite } from 'react-icons/md'
 import { FaComment, FaEye } from 'react-icons/fa'
@@ -97,11 +96,11 @@ const Feed = (props: Feed) => {
 	const isRegistered = useCheckRegistered()
 	const { user } = useMoralis()
 	const commentCount = useCommentCount(props.id)
-	// const { ref, entry } = useIntersection({
-  //   root: document.body,
-	// 	rootMargin: "1px",
-  //   threshold: 1,
-  // });
+	const { ref, entry } = useIntersection({
+    root: document.body,
+		rootMargin: "1px",
+    threshold: 1,
+  });
 
 
 	const { data, isLoading, isFetching } = useMoralisQuery('NewUser', (q) =>
@@ -119,7 +118,7 @@ const Feed = (props: Feed) => {
 		(q) => q.equalTo('uid', props.id),
 		[],
 		{
-			live: true,
+			live: true
 		}
 	)
 
