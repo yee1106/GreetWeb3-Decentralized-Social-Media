@@ -29,7 +29,7 @@ const Aside = () => {
 						p='md'
 					>
 						<Group position='center'>
-							<Text size='sm'>Following suggestion</Text>
+							{/* <Text size='sm'>Following suggestion</Text> */}
 						</Group>
 					</Box>
 				</Group>

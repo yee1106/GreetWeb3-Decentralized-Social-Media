@@ -28,7 +28,7 @@ export interface CommentProps {
 	self: boolean
 	commentId: string
 	updateCount: () => void
-	deleteCommentUpdate: (id:string)=>void
+	deleteCommentUpdate: (id: string) => void
 	//commentObject:Moralis.Object<Moralis.Attributes>
 }
 
@@ -41,7 +41,7 @@ const Comment: React.FC<CommentProps> = ({
 	userId,
 	commentId,
 	updateCount,
-	deleteCommentUpdate
+	deleteCommentUpdate,
 }) => {
 	const theme = useMantineTheme()
 	const { Moralis } = useMoralis()
@@ -83,7 +83,10 @@ const Comment: React.FC<CommentProps> = ({
 				<Box className={classes.comment} p='xs'>
 					<Group position='apart' spacing={5} className={classes.commentHeader}>
 						<Group spacing={5}>
-							<Link href={{ pathname: '/profile', query: { id: userId } }} passHref>
+							<Link
+								href={{ pathname: '/profile', query: { id: userId } }}
+								passHref
+							>
 								<Text
 									weight='bold'
 									size='sm'
